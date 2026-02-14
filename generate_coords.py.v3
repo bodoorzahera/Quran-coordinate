@@ -1,0 +1,329 @@
+#!/usr/bin/env python3
+"""
+Quran Word Coordinate Generator v2 — Auto Line Detection
+=========================================================
+Detects line positions from image (no hardcoded Y positions).
+Handles surah headers, basmala, and special pages (1 & 2).
+
+USAGE:
+  python3 generate_coords_v2.py --build-db -q quran.com-images
+  python3 generate_coords_v2.py -b . -q quran.com-images -o output --page 3 --debug
+  python3 generate_coords_v2.py -b . -q quran.com-images -o output
+"""
+
+import json, os, sys, re, sqlite3, argparse
+import numpy as np
+from PIL import Image, ImageDraw
+
+try:
+    from fontTools.ttLib import TTFont
+except ImportError:
+    print("ERROR: pip install fonttools Pillow numpy"); sys.exit(1)
+
+TEXT_LEFT, TEXT_RIGHT = 40, 880
+INK_THRESH = 180
+SNAP_RANGE = 30
+MIN_WORD_RATIO = 0.30
+
+
+# ─── Database Builder ────────────────────────────────────────────────────────
+
+def build_sqlite_db(quran_images_dir, db_path='quran_glyphs.db'):
+    sql_path = os.path.join(quran_images_dir, 'sql', '02-database.sql')
+    if not os.path.exists(sql_path):
+        print(f"ERROR: {sql_path} not found"); return False
+    conn = sqlite3.connect(db_path); c = conn.cursor()
+    c.execute('CREATE TABLE IF NOT EXISTS glyph (glyph_id INTEGER PRIMARY KEY, font_file TEXT, glyph_code INTEGER, page_number INTEGER, glyph_type_id INTEGER, glyph_type_meta INTEGER, description TEXT)')
+    c.execute('CREATE TABLE IF NOT EXISTS glyph_page_line (glyph_page_line_id INTEGER PRIMARY KEY, glyph_id INTEGER, page_number INTEGER, line_number INTEGER, position INTEGER, line_type TEXT)')
+    c.execute('CREATE TABLE IF NOT EXISTS glyph_ayah (glyph_ayah_id INTEGER PRIMARY KEY, glyph_id INTEGER, sura_number INTEGER, ayah_number INTEGER, position INTEGER)')
+    with open(sql_path, 'r') as f: content = f.read()
+    def parse_inserts(table):
+        rows = []
+        for match in re.findall(rf"INSERT INTO `{table}` VALUES\s*(.+?);", content, re.DOTALL):
+            for m in re.finditer(r'\(([^)]+)\)', match):
+                vals = []
+                for v in m.group(1).split(','):
+                    v = v.strip().strip("'")
+                    if v == 'NULL': vals.append(None)
+                    else:
+                        try: vals.append(int(v))
+                        except: vals.append(v)
+                rows.append(tuple(vals))
+        return rows
+    for table, cols in [('glyph', 7), ('glyph_page_line', 6), ('glyph_ayah', 5)]:
+        print(f"  {table}...", end='', flush=True)
+        rows = parse_inserts(table)
+        c.executemany(f'INSERT OR IGNORE INTO {table} VALUES ({",".join(["?"]*cols)})', rows)
+        print(f" {len(rows)} rows")
+    c.execute('CREATE INDEX IF NOT EXISTS i1 ON glyph_page_line(page_number)')
+    c.execute('CREATE INDEX IF NOT EXISTS i2 ON glyph_ayah(sura_number,ayah_number)')
+    c.execute('CREATE INDEX IF NOT EXISTS i3 ON glyph(page_number)')
+    conn.commit(); conn.close()
+    print(f"  ✓ {db_path}"); return True
+
+
+# ─── Font Cache ──────────────────────────────────────────────────────────────
+
+_font_cache = {}
+def get_font_advances(font_path):
+    if font_path in _font_cache: return _font_cache[font_path]
+    tt = TTFont(font_path); cmap = tt.getBestCmap(); hmtx = tt['hmtx']
+    adv = {cp: hmtx.metrics[gn][0] for cp, gn in cmap.items() if gn in hmtx.metrics}
+    tt.close(); _font_cache[font_path] = adv; return adv
+
+
+# ─── Auto Line Detection from Image ─────────────────────────────────────────
+
+def detect_line_bands(gray, min_ink=5, min_height=15):
+    """Detect horizontal ink bands (text lines) from a grayscale page image."""
+    h, w = gray.shape
+    row_ink = np.sum(gray[:, TEXT_LEFT:TEXT_RIGHT] < INK_THRESH, axis=1)
+    
+    bands = []
+    in_band = False
+    band_start = 0
+    
+    for y in range(h):
+        if row_ink[y] > min_ink:
+            if not in_band:
+                band_start = y
+                in_band = True
+        else:
+            if in_band:
+                band_h = y - band_start
+                if band_h > min_height:
+                    bands.append((band_start, y))
+                in_band = False
+    
+    if in_band and (h - band_start) > min_height:
+        bands.append((band_start, h))
+    
+    return bands
+
+
+# ─── Image Analysis ──────────────────────────────────────────────────────────
+
+def find_ink_extent(gray, y1, y2):
+    strip = gray[y1:y2, TEXT_LEFT:TEXT_RIGHT]
+    ci = np.sum(strip < INK_THRESH, axis=0); ic = np.where(ci > 0)[0]
+    if len(ic) == 0: return TEXT_LEFT, TEXT_RIGHT, y1, y2
+    ri = np.sum(strip < INK_THRESH, axis=1); ir = np.where(ri > 3)[0]
+    return (int(ic[0]+TEXT_LEFT), int(ic[-1]+TEXT_LEFT),
+            int(ir[0]+y1) if len(ir) else y1,
+            int(ir[-1]+y1+1) if len(ir) else y2)
+
+
+def find_all_gaps(gray, y1, y2, x1, x2):
+    strip = gray[y1:y2, x1:x2]; ci = np.sum(strip < INK_THRESH, axis=0)
+    gaps = []; ing = False; gs = 0
+    for i in range(len(ci)):
+        if ci[i] == 0:
+            if not ing: gs = i; ing = True
+        else:
+            if ing:
+                w = i - gs
+                if w >= 2: gaps.append({'center': gs + w//2 + x1, 'width': w})
+                ing = False
+    return gaps
+
+
+# ─── Core: Compute Line Coordinates ─────────────────────────────────────────
+
+def compute_line_cuts(glyphs, font_adv, gray, y1, y2, ink_l, ink_r):
+    n = len(glyphs); lw = ink_r - ink_l
+    if lw <= 0 or n == 0: return None
+    advs = [font_adv.get(g['code'], 500) for g in glyphs]
+    total = sum(advs)
+    if total == 0: return None
+
+    prop = [ink_r]; cum = 0
+    for i in range(n - 1):
+        cum += advs[i]; prop.append(ink_r - int(cum / total * lw))
+    prop.append(ink_l)
+
+    all_gaps = find_all_gaps(gray, y1, y2, ink_l, ink_r)
+    used = set(); cuts = [prop[0]]
+
+    for ci in range(1, n):
+        target = prop[ci]; prev = cuts[-1]
+        exp_w = int(advs[ci-1] / total * lw)
+        best = None; best_score = -999
+        for gi, g in enumerate(all_gaps):
+            if gi in used: continue
+            dist = abs(g['center'] - target)
+            if dist > SNAP_RANGE: continue
+            w_left = prev - g['center']
+            if w_left < max(15, int(exp_w * MIN_WORD_RATIO)): continue
+            score = g['width'] * 2.0 - dist * 0.5
+            if score > best_score: best_score = score; best = (gi, g['center'])
+        if best: used.add(best[0]); cuts.append(best[1])
+        else: cuts.append(target)
+    cuts.append(prop[-1])
+
+    # Fix monotonicity
+    for i in range(1, len(cuts)):
+        if cuts[i] >= cuts[i-1]: cuts[i] = cuts[i-1] - 1
+    # Fix narrow words
+    expected_w = [int(a / total * lw) for a in advs]
+    for _ in range(3):
+        changed = False
+        for i in range(n):
+            w = cuts[i] - cuts[i+1]
+            if w < max(15, int(expected_w[i] * MIN_WORD_RATIO)):
+                cuts[i+1] = prop[i+1]; changed = True
+        if not changed: break
+    for i in range(1, len(cuts)):
+        if cuts[i] >= cuts[i-1]: cuts[i] = cuts[i-1] - 1
+    return cuts
+
+
+# ─── Process Single Page ─────────────────────────────────────────────────────
+
+def process_page(page_num, base_dir, fonts_dir, db_path, output_dir, debug=False):
+    ps = f"page-{page_num:03d}"
+
+    img_path = None
+    for ext in ['png', 'jpg']:
+        p = os.path.join(base_dir, 'images', f'{ps}.{ext}')
+        if os.path.exists(p): img_path = p; break
+    if not img_path: return None
+
+    font_path = os.path.join(fonts_dir, f'QCF_P{page_num:03d}.TTF')
+    if not os.path.exists(font_path): return None
+    font_adv = get_font_advances(font_path)
+
+    gray = np.array(Image.open(img_path).convert('L'))
+
+    # ── Query ALL lines from DB (ayah + sura + bismillah) ──
+    conn = sqlite3.connect(db_path); c = conn.cursor()
+    c.execute('''
+        SELECT gpl.line_number, gpl.line_type, g.glyph_code, g.glyph_type_id,
+               ga.sura_number, ga.ayah_number, ga.position
+        FROM glyph_page_line gpl
+        JOIN glyph g ON g.glyph_id = gpl.glyph_id
+        LEFT JOIN glyph_ayah ga ON ga.glyph_id = gpl.glyph_id
+        WHERE gpl.page_number = ?
+        ORDER BY gpl.line_number, gpl.position
+    ''', (page_num,))
+
+    all_lines = {}  # line_number -> {'type': str, 'glyphs': [...]}
+    for r in c.fetchall():
+        ln = r[0]
+        if ln not in all_lines:
+            all_lines[ln] = {'type': r[1], 'glyphs': []}
+        all_lines[ln]['glyphs'].append({
+            'code': r[2], 'tid': r[3],
+            'sura': r[4], 'ayah': r[5], 'wpos': r[6]
+        })
+    conn.close()
+
+    if not all_lines: return None
+
+    total_db_lines = max(all_lines.keys())
+
+    # ── Detect line bands from image ──
+    bands = detect_line_bands(gray)
+
+    if len(bands) < total_db_lines:
+        # Fallback: try with lower thresholds
+        bands = detect_line_bands(gray, min_ink=3, min_height=10)
+
+    if len(bands) < total_db_lines:
+        # Still not enough — pad with estimated positions
+        if total_db_lines == 15:
+            # Standard page, use fixed positions as fallback
+            bands = [(18 + i * 94, 18 + i * 94 + 80) for i in range(15)]
+
+    # ── Map DB line numbers to detected bands ──
+    coords = {}
+
+    for line_num in sorted(all_lines.keys()):
+        line_info = all_lines[line_num]
+        line_type = line_info['type']
+        glyphs = line_info['glyphs']
+
+        # Skip non-ayah lines
+        if line_type != 'ayah':
+            continue
+
+        # Map line_number (1-based) to band index (0-based)
+        band_idx = line_num - 1
+        if band_idx >= len(bands):
+            continue
+
+        y1, y2 = bands[band_idx]
+        ink_l, ink_r, ink_top, ink_bot = find_ink_extent(gray, y1, y2)
+        actual_h = ink_bot - ink_top
+
+        n = len(glyphs)
+        cuts = compute_line_cuts(glyphs, font_adv, gray, y1, y2, ink_l, ink_r)
+        if cuts is None: continue
+
+        for i, g in enumerate(glyphs):
+            xr, xl = cuts[i], cuts[i+1]
+            if xl > xr: xl, xr = xr, xl
+            w = max(xr - xl, 1)
+            if g['tid'] == 1 and g['sura'] is not None:
+                loc = f"{g['sura']}:{g['ayah']}:{g['wpos']}"
+                h_h = min(actual_h, 68)
+                coords[loc] = {
+                    'h': {'x': xl, 'y': ink_top, 'w': w, 'h': h_h},
+                    'p': {'x': xl, 'y': max(0, ink_top - 5), 'w': w, 'h': min(23, h_h)},
+                    'o': {'x': 0, 'y': ink_top, 'w': 39, 'h': h_h},
+                }
+
+    result = {'page': page_num, 'coords': coords}
+    with open(os.path.join(output_dir, f'{ps}.json'), 'w', encoding='utf-8') as f:
+        json.dump(result, f, ensure_ascii=False, indent=2)
+
+    if debug:
+        img = Image.open(img_path).convert('RGBA')
+        ov = Image.new('RGBA', img.size, (0,0,0,0)); draw = ImageDraw.Draw(ov)
+        palette = [(255,50,50),(50,180,50),(50,50,255),(255,165,0),(160,32,240),(0,200,200),(200,50,120),(120,120,0)]
+        for ci, (loc, layers) in enumerate(coords.items()):
+            h = layers['h']; c = palette[ci % len(palette)]
+            draw.rectangle([h['x'], h['y'], h['x']+h['w']-1, h['y']+h['h']-1],
+                           fill=(*c, 30), outline=(*c, 200), width=2)
+        Image.alpha_composite(img, ov).save(os.path.join(output_dir, f'debug-{ps}.png'))
+
+    return result
+
+
+def main():
+    global IMAGES_DIR, JSON_DIR
+    p = argparse.ArgumentParser(description='Quran Word Coordinates v2 (Auto Line Detection)')
+    p.add_argument('--base-dir', '-b', default='.')
+    p.add_argument('--output-dir', '-o', default='output')
+    p.add_argument('--quran-images-dir', '-q', default='quran.com-images')
+    p.add_argument('--db', default='quran_glyphs.db')
+    p.add_argument('--page', '-p', type=int)
+    p.add_argument('--start', '-s', type=int, default=1)
+    p.add_argument('--end', '-e', type=int, default=604)
+    p.add_argument('--debug', '-d', action='store_true')
+    p.add_argument('--build-db', action='store_true')
+    args = p.parse_args()
+
+    if args.build_db or not os.path.exists(args.db):
+        print("Building SQLite database...")
+        if not build_sqlite_db(args.quran_images_dir, args.db): sys.exit(1)
+
+    fonts_dir = os.path.join(args.quran_images_dir, 'res', 'fonts')
+    if not os.path.isdir(fonts_dir):
+        print(f"ERROR: {fonts_dir} not found"); sys.exit(1)
+
+    os.makedirs(args.output_dir, exist_ok=True)
+    pages = [args.page] if args.page else list(range(args.start, args.end + 1))
+    print(f"Processing {len(pages)} pages...")
+    ok = fail = 0
+    for i, pn in enumerate(pages):
+        print(f"  [{i+1}/{len(pages)}] Page {pn}...", end='', flush=True)
+        try:
+            r = process_page(pn, args.base_dir, fonts_dir, args.db, args.output_dir, args.debug)
+            if r: print(f" ✓ {len(r['coords'])} words"); ok += 1
+            else: print(" skip"); fail += 1
+        except Exception as e: print(f" ✗ {e}"); fail += 1
+    print(f"\nDone: {ok} ok, {fail} skip → {args.output_dir}/")
+
+
+if __name__ == '__main__':
+    main()

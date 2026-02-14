@@ -1,32 +1,14 @@
 #!/usr/bin/env python3
 """
-Quran Word Coordinate Generator — Hybrid QPC + Image Gap Snapping
-=================================================================
-
-Uses QPC font advance widths as proportional guide, then snaps word
-boundaries to actual gaps in the page image. This handles the case where
-page images are from a different rendering than the QPC V1 fonts.
-
-Algorithm:
-  1. Load glyph data from quran.com-images MySQL dump (→ SQLite)
-  2. For each line, compute expected boundary positions from QPC advance widths
-  3. Find all pixel-level gaps in the actual page image
-  4. Snap each boundary to the nearest suitable gap (wider gaps preferred)
-  5. Validate: no word should be narrower than 30% of its expected width
-
-PREREQUISITES:
-  git clone https://github.com/quran/quran.com-images.git
-  pip install fonttools Pillow numpy --break-system-packages
+Quran Word Coordinate Generator v2 — Auto Line Detection
+=========================================================
+Detects line positions from image (no hardcoded Y positions).
+Handles surah headers, basmala, and special pages (1 & 2).
 
 USAGE:
-  # First time: build SQLite DB from MySQL dump
-  python3 generate_coords.py --build-db -q quran.com-images
-
-  # Generate for one page with debug overlay
-  python3 generate_coords.py -b . -q quran.com-images -o output --page 3 --debug
-
-  # Batch all 604 pages
-  python3 generate_coords.py -b . -q quran.com-images -o output
+  python3 generate_coords_v2.py --build-db -q quran.com-images
+  python3 generate_coords_v2.py -b . -q quran.com-images -o output --page 3 --debug
+  python3 generate_coords_v2.py -b . -q quran.com-images -o output
 """
 
 import json, os, sys, re, sqlite3, argparse
@@ -36,26 +18,15 @@ from PIL import Image, ImageDraw
 try:
     from fontTools.ttLib import TTFont
 except ImportError:
-    print("ERROR: pip install fonttools Pillow numpy")
-    sys.exit(1)
-
-# ─── Configuration ───────────────────────────────────────────────────────────
+    print("ERROR: pip install fonttools Pillow numpy"); sys.exit(1)
 
 TEXT_LEFT, TEXT_RIGHT = 40, 880
 INK_THRESH = 180
 SNAP_RANGE = 30
 MIN_WORD_RATIO = 0.30
-MAX_H_HEIGHT = 68
-MAX_P_HEIGHT = 23
 
-DEFAULT_LINES = [
-    (23, 68, 0, 23), (112, 76, 91, 21), (203, 77, 188, 15),
-    (295, 78, 280, 15), (394, 72, 373, 21), (481, 80, 466, 15),
-    (580, 76, 561, 19), (674, 79, 656, 18), (767, 79, 753, 14),
-    (864, 75, 846, 18), (956, 76, 939, 17), (1050, 78, 1032, 18),
-    (1149, 74, 1128, 21), (1242, 74, 1223, 19), (1332, 79, 1316, 16),
-]
 
+# ─── Database Builder ────────────────────────────────────────────────────────
 
 def build_sqlite_db(quran_images_dir, db_path='quran_glyphs.db'):
     sql_path = os.path.join(quran_images_dir, 'sql', '02-database.sql')
@@ -91,6 +62,8 @@ def build_sqlite_db(quran_images_dir, db_path='quran_glyphs.db'):
     print(f"  ✓ {db_path}"); return True
 
 
+# ─── Font Cache ──────────────────────────────────────────────────────────────
+
 _font_cache = {}
 def get_font_advances(font_path):
     if font_path in _font_cache: return _font_cache[font_path]
@@ -99,12 +72,45 @@ def get_font_advances(font_path):
     tt.close(); _font_cache[font_path] = adv; return adv
 
 
+# ─── Auto Line Detection from Image ─────────────────────────────────────────
+
+def detect_line_bands(gray, min_ink=5, min_height=15):
+    """Detect horizontal ink bands (text lines) from a grayscale page image."""
+    h, w = gray.shape
+    row_ink = np.sum(gray[:, TEXT_LEFT:TEXT_RIGHT] < INK_THRESH, axis=1)
+    
+    bands = []
+    in_band = False
+    band_start = 0
+    
+    for y in range(h):
+        if row_ink[y] > min_ink:
+            if not in_band:
+                band_start = y
+                in_band = True
+        else:
+            if in_band:
+                band_h = y - band_start
+                if band_h > min_height:
+                    bands.append((band_start, y))
+                in_band = False
+    
+    if in_band and (h - band_start) > min_height:
+        bands.append((band_start, h))
+    
+    return bands
+
+
+# ─── Image Analysis ──────────────────────────────────────────────────────────
+
 def find_ink_extent(gray, y1, y2):
     strip = gray[y1:y2, TEXT_LEFT:TEXT_RIGHT]
     ci = np.sum(strip < INK_THRESH, axis=0); ic = np.where(ci > 0)[0]
     if len(ic) == 0: return TEXT_LEFT, TEXT_RIGHT, y1, y2
     ri = np.sum(strip < INK_THRESH, axis=1); ir = np.where(ri > 3)[0]
-    return int(ic[0]+TEXT_LEFT), int(ic[-1]+TEXT_LEFT), int(ir[0]+y1) if len(ir) else y1, int(ir[-1]+y1+1) if len(ir) else y2
+    return (int(ic[0]+TEXT_LEFT), int(ic[-1]+TEXT_LEFT),
+            int(ir[0]+y1) if len(ir) else y1,
+            int(ir[-1]+y1+1) if len(ir) else y2)
 
 
 def find_all_gaps(gray, y1, y2, x1, x2):
@@ -121,13 +127,15 @@ def find_all_gaps(gray, y1, y2, x1, x2):
     return gaps
 
 
-def compute_line_cuts(glyphs, font_adv, gray, y1, y2, ink_l, ink_r):
+# ─── Core: Compute Line Coordinates ─────────────────────────────────────────
+
+def compute_line_cuts(glyphs, font_adv, gray, y1, y2, ink_l, ink_r, snap_range=None):
+    if snap_range is None: snap_range = SNAP_RANGE
     n = len(glyphs); lw = ink_r - ink_l
     if lw <= 0 or n == 0: return None
     advs = [font_adv.get(g['code'], 500) for g in glyphs]
     total = sum(advs)
     if total == 0: return None
-    expected_w = [int(a / total * lw) for a in advs]
 
     prop = [ink_r]; cum = 0
     for i in range(n - 1):
@@ -138,32 +146,54 @@ def compute_line_cuts(glyphs, font_adv, gray, y1, y2, ink_l, ink_r):
     used = set(); cuts = [prop[0]]
 
     for ci in range(1, n):
-        target = prop[ci]; prev = cuts[-1]; exp_w = expected_w[ci - 1]
+        target = prop[ci]; prev = cuts[-1]
+        exp_w = int(advs[ci-1] / total * lw)
+        # For tiny glyphs (specials with adv < 200, ~4px), just use proportional
+        # position. They're too small for meaningful snap detection.
+        if advs[ci-1] < 200 or (ci < n and advs[ci] < 200):
+            cuts.append(target)
+            continue
+        # Check if this boundary is adjacent to an ayah marker or special
+        # (glyph ci-1 or ci is type 2/3). These have clear visual gaps.
+        adj_marker = (glyphs[ci-1]['tid'] in (2, 3) or glyphs[ci]['tid'] in (2, 3))
+        snap = snap_range if not adj_marker else snap_range + 15
         best = None; best_score = -999
         for gi, g in enumerate(all_gaps):
             if gi in used: continue
             dist = abs(g['center'] - target)
-            if dist > SNAP_RANGE: continue
+            if dist > snap: continue
             w_left = prev - g['center']
-            if w_left < max(20, int(exp_w * MIN_WORD_RATIO)): continue
-            score = g['width'] * 2.0 - dist * 0.5
+            if w_left < max(15, int(exp_w * MIN_WORD_RATIO)): continue
+            # For marker boundaries, prefer wider gaps (marker circles have clear space)
+            w_bonus = 3.0 if adj_marker else 2.0
+            score = g['width'] * w_bonus - dist * 0.5
             if score > best_score: best_score = score; best = (gi, g['center'])
         if best: used.add(best[0]); cuts.append(best[1])
         else: cuts.append(target)
-
     cuts.append(prop[-1])
+
+    # Fix monotonicity
+    for i in range(1, len(cuts)):
+        if cuts[i] >= cuts[i-1]: cuts[i] = cuts[i-1] - 1
+    # Fix narrow words
+    expected_w = [int(a / total * lw) for a in advs]
     for _ in range(3):
         changed = False
         for i in range(n):
             w = cuts[i] - cuts[i+1]
-            if w < max(20, int(expected_w[i] * MIN_WORD_RATIO)):
+            if w < max(15, int(expected_w[i] * MIN_WORD_RATIO)):
                 cuts[i+1] = prop[i+1]; changed = True
         if not changed: break
+    for i in range(1, len(cuts)):
+        if cuts[i] >= cuts[i-1]: cuts[i] = cuts[i-1] - 1
     return cuts
 
 
+# ─── Process Single Page ─────────────────────────────────────────────────────
+
 def process_page(page_num, base_dir, fonts_dir, db_path, output_dir, debug=False):
     ps = f"page-{page_num:03d}"
+
     img_path = None
     for ext in ['png', 'jpg']:
         p = os.path.join(base_dir, 'images', f'{ps}.{ext}')
@@ -173,43 +203,133 @@ def process_page(page_num, base_dir, fonts_dir, db_path, output_dir, debug=False
     font_path = os.path.join(fonts_dir, f'QCF_P{page_num:03d}.TTF')
     if not os.path.exists(font_path): return None
     font_adv = get_font_advances(font_path)
+
     gray = np.array(Image.open(img_path).convert('L'))
 
+    # ── Query ALL lines from DB (ayah + sura + bismillah) ──
     conn = sqlite3.connect(db_path); c = conn.cursor()
-    c.execute('''SELECT gpl.line_number, g.glyph_code, g.glyph_type_id,
-        ga.sura_number, ga.ayah_number, ga.position
-        FROM glyph_page_line gpl JOIN glyph g ON g.glyph_id=gpl.glyph_id
-        LEFT JOIN glyph_ayah ga ON ga.glyph_id=gpl.glyph_id
-        WHERE gpl.page_number=? AND gpl.line_type='ayah'
-        ORDER BY gpl.line_number, gpl.position''', (page_num,))
-    db_lines = {}
+    c.execute('''
+        SELECT gpl.line_number, gpl.line_type, g.glyph_code, g.glyph_type_id,
+               ga.sura_number, ga.ayah_number, ga.position
+        FROM glyph_page_line gpl
+        JOIN glyph g ON g.glyph_id = gpl.glyph_id
+        LEFT JOIN glyph_ayah ga ON ga.glyph_id = gpl.glyph_id
+        WHERE gpl.page_number = ?
+        ORDER BY gpl.line_number, gpl.position
+    ''', (page_num,))
+
+    all_lines = {}  # line_number -> {'type': str, 'glyphs': [...]}
     for r in c.fetchall():
         ln = r[0]
-        if ln not in db_lines: db_lines[ln] = []
-        db_lines[ln].append({'code': r[1], 'tid': r[2], 'sura': r[3], 'ayah': r[4], 'wpos': r[5]})
+        if ln not in all_lines:
+            all_lines[ln] = {'type': r[1], 'glyphs': []}
+        all_lines[ln]['glyphs'].append({
+            'code': r[2], 'tid': r[3],
+            'sura': r[4], 'ayah': r[5], 'wpos': r[6]
+        })
     conn.close()
-    if not db_lines: return None
 
-    coords = {}; text_idx = 0
-    for line_num in sorted(db_lines.keys()):
-        if text_idx >= len(DEFAULT_LINES): break
-        ty, th, gy, gh = DEFAULT_LINES[text_idx]; text_idx += 1
-        glyphs = db_lines[line_num]
-        y1, y2 = ty, min(ty + th, gray.shape[0])
+    if not all_lines: return None
+
+    total_db_lines = max(all_lines.keys())
+
+    # ── Detect line bands from image ──
+    raw_bands = detect_line_bands(gray)
+
+    # Filter out ornamental header/footer bands
+    # Pages 1&2 have large decorative bands (h > 150px) at top and bottom
+    # Standard text lines are 60-130px tall
+    # Also filter bands that are in the top 10% or bottom 10% and are very tall
+    img_h = gray.shape[0]
+    bands = []
+    for (y1, y2) in raw_bands:
+        band_h = y2 - y1
+        # Skip very tall bands (ornamental headers/footers)
+        if band_h > 180:
+            continue
+        # Skip bands in extreme top/bottom that look decorative
+        if (y1 < img_h * 0.05 or y2 > img_h * 0.90) and band_h > 150:
+            continue
+        bands.append((y1, y2))
+
+    if len(bands) < total_db_lines:
+        # Fallback: try with lower thresholds
+        raw2 = detect_line_bands(gray, min_ink=3, min_height=10)
+        bands2 = [(y1,y2) for y1,y2 in raw2 if (y2-y1) <= 180]
+        if len(bands2) >= total_db_lines:
+            bands = bands2
+
+    if len(bands) < total_db_lines:
+        # Still not enough — pad with estimated positions
+        if total_db_lines == 15:
+            bands = [(18 + i * 94, 18 + i * 94 + 80) for i in range(15)]
+
+    # If we have MORE bands than expected, trim from edges
+    while len(bands) > total_db_lines:
+        heights = [y2 - y1 for y1, y2 in bands]
+        if heights[0] >= heights[-1] and heights[0] > 130:
+            bands.pop(0)
+        elif heights[-1] > 130:
+            bands.pop(-1)
+        else:
+            bands.pop(heights.index(max(heights)))
+
+    # Dynamic snap_range: pages with fewer lines (1&2 have 8) have bigger text
+    # so proportional errors are larger → need wider snap range
+    page_snap = SNAP_RANGE
+    if total_db_lines <= 8:
+        page_snap = int(SNAP_RANGE * 1.8)  # ~54px for pages 1&2
+
+    # ── Smart band-to-line mapping ──
+    # If bands < total_db_lines, some lines (e.g. sura header in decorative
+    # frame) were filtered out. Map remaining bands to the LAST N lines.
+    line_to_band = {}
+    if len(bands) >= total_db_lines:
+        for ln in range(1, total_db_lines + 1):
+            line_to_band[ln] = ln - 1
+    else:
+        # Missing bands are at the TOP (decorative header contains sura title)
+        offset = total_db_lines - len(bands)
+        for ln in range(1, total_db_lines + 1):
+            bi = ln - 1 - offset
+            if 0 <= bi < len(bands):
+                line_to_band[ln] = bi
+
+    # ── Process each line ──
+    coords = {}
+
+    for line_num in sorted(all_lines.keys()):
+        line_info = all_lines[line_num]
+        line_type = line_info['type']
+        glyphs = line_info['glyphs']
+
+        if line_type != 'ayah':
+            continue
+
+        if line_num not in line_to_band:
+            continue
+        band_idx = line_to_band[line_num]
+        if band_idx >= len(bands):
+            continue
+
+        y1, y2 = bands[band_idx]
         ink_l, ink_r, ink_top, ink_bot = find_ink_extent(gray, y1, y2)
-        cuts = compute_line_cuts(glyphs, font_adv, gray, y1, y2, ink_l, ink_r)
-        if cuts is None: continue
         actual_h = ink_bot - ink_top
+
+        n = len(glyphs)
+        cuts = compute_line_cuts(glyphs, font_adv, gray, y1, y2, ink_l, ink_r, snap_range=page_snap)
+        if cuts is None: continue
+
         for i, g in enumerate(glyphs):
             xr, xl = cuts[i], cuts[i+1]
             if xl > xr: xl, xr = xr, xl
             w = max(xr - xl, 1)
             if g['tid'] == 1 and g['sura'] is not None:
                 loc = f"{g['sura']}:{g['ayah']}:{g['wpos']}"
-                h_h = min(actual_h, MAX_H_HEIGHT)
+                h_h = actual_h
                 coords[loc] = {
                     'h': {'x': xl, 'y': ink_top, 'w': w, 'h': h_h},
-                    'p': {'x': xl, 'y': gy + max(0,(gh-min(gh,MAX_P_HEIGHT))//2), 'w': w, 'h': min(gh, MAX_P_HEIGHT)},
+                    'p': {'x': xl, 'y': max(0, ink_top - 5), 'w': w, 'h': min(23, h_h)},
                     'o': {'x': 0, 'y': ink_top, 'w': 39, 'h': h_h},
                 }
 
@@ -226,11 +346,13 @@ def process_page(page_num, base_dir, fonts_dir, db_path, output_dir, debug=False
             draw.rectangle([h['x'], h['y'], h['x']+h['w']-1, h['y']+h['h']-1],
                            fill=(*c, 30), outline=(*c, 200), width=2)
         Image.alpha_composite(img, ov).save(os.path.join(output_dir, f'debug-{ps}.png'))
+
     return result
 
 
 def main():
-    p = argparse.ArgumentParser(description='Quran Word Coordinates (QPC + Gap Snap)')
+    global IMAGES_DIR, JSON_DIR
+    p = argparse.ArgumentParser(description='Quran Word Coordinates v2 (Auto Line Detection)')
     p.add_argument('--base-dir', '-b', default='.')
     p.add_argument('--output-dir', '-o', default='output')
     p.add_argument('--quran-images-dir', '-q', default='quran.com-images')
@@ -248,7 +370,7 @@ def main():
 
     fonts_dir = os.path.join(args.quran_images_dir, 'res', 'fonts')
     if not os.path.isdir(fonts_dir):
-        print(f"ERROR: {fonts_dir} not found\n  git clone https://github.com/quran/quran.com-images.git"); sys.exit(1)
+        print(f"ERROR: {fonts_dir} not found"); sys.exit(1)
 
     os.makedirs(args.output_dir, exist_ok=True)
     pages = [args.page] if args.page else list(range(args.start, args.end + 1))
@@ -262,6 +384,7 @@ def main():
             else: print(" skip"); fail += 1
         except Exception as e: print(f" ✗ {e}"); fail += 1
     print(f"\nDone: {ok} ok, {fail} skip → {args.output_dir}/")
+
 
 if __name__ == '__main__':
     main()
