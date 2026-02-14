@@ -1,0 +1,8 @@
+Option 1: Clone the repo
+git clone https://github.com/quran/quran.com-images.git
+
+# Then run
+python3 generate_coords.py --build-db
+
+# Option 2: If you already have it somewhere else, specify the path
+python3 generate_coords.py -q /path/to/quran.com-images --build-db
