@@ -1,0 +1,580 @@
+#!/usr/bin/env python3
+"""
+Quran Word Coordinate Viewer & Editor v2
+==========================================
+FastAPI app with:
+  - Word text labels inside boxes (from mushaf JSON)
+  - Touch drag/drop for mobile
+  - Add/delete/rename boxes
+  - Verse marker awareness
+  - Toggle labels on/off
+  - Stats: mismatched / missing boxes
+
+USAGE:
+  pip install fastapi uvicorn
+  python3 server.py --images-dir ./images --json-dir ./output --mushaf-dir ./mushaf --port 8000
+"""
+
+import json, os, argparse, glob, shutil
+from pathlib import Path
+from fastapi import FastAPI, HTTPException, Request
+from fastapi.responses import HTMLResponse, FileResponse, JSONResponse
+import uvicorn
+
+app = FastAPI(title="Quran Coords Viewer")
+
+IMAGES_DIR = "./images"
+JSON_DIR = "./output"
+MUSHAF_DIR = "./mushaf"
+
+
+def get_available_pages():
+    pages = set()
+    for f in glob.glob(os.path.join(JSON_DIR, "page-*.json")):
+        name = os.path.basename(f)
+        try:
+            num = int(name.replace("page-", "").replace(".json", ""))
+            pages.add(num)
+        except:
+            pass
+    return sorted(pages)
+
+
+def find_image(page_num):
+    for ext in ["png", "jpg", "jpeg", "webp"]:
+        p = os.path.join(IMAGES_DIR, f"page-{page_num:03d}.{ext}")
+        if os.path.exists(p):
+            return p
+    return None
+
+
+def load_mushaf(page_num):
+    """Load mushaf JSON to get word text for each location."""
+    p = os.path.join(MUSHAF_DIR, f"page-{page_num:03d}.json")
+    if not os.path.exists(p):
+        return {}
+    with open(p, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    word_map = {}
+    for line in data.get("lines", []):
+        line_num = line.get("line", 0)
+        line_type = line.get("type", "text")
+        for w in line.get("words", []):
+            loc = w.get("location", "")
+            if loc:
+                word_map[loc] = {
+                    "word": w.get("word", ""),
+                    "line": line_num,
+                    "lineType": line_type,
+                }
+    return word_map
+
+
+# ─── API Routes ──────────────────────────────────────────────────────────────
+
+@app.get("/", response_class=HTMLResponse)
+async def index():
+    return VIEWER_HTML
+
+
+@app.get("/api/pages")
+async def list_pages():
+    return {"pages": get_available_pages()}
+
+
+@app.get("/api/page/{page_num}")
+async def get_page_data(page_num: int):
+    json_path = os.path.join(JSON_DIR, f"page-{page_num:03d}.json")
+    if not os.path.exists(json_path):
+        raise HTTPException(404, f"No JSON for page {page_num}")
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    data["mushaf"] = load_mushaf(page_num)
+    return data
+
+
+@app.get("/api/image/{page_num}")
+async def get_image(page_num: int):
+    img = find_image(page_num)
+    if not img:
+        raise HTTPException(404, f"No image for page {page_num}")
+    return FileResponse(img)
+
+
+@app.post("/api/page/{page_num}/save")
+async def save_page(page_num: int, request: Request):
+    body = await request.json()
+    json_path = os.path.join(JSON_DIR, f"page-{page_num:03d}.json")
+    if not os.path.exists(json_path):
+        raise HTTPException(404)
+    bak = json_path + ".bak"
+    if not os.path.exists(bak):
+        shutil.copy2(json_path, bak)
+    with open(json_path, "r", encoding="utf-8") as f:
+        data = json.load(f)
+    data["coords"] = body.get("coords", {})
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+    return {"ok": True}
+
+
+# ─── HTML ────────────────────────────────────────────────────────────────────
+
+VIEWER_HTML = r"""<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+<title>محرر إحداثيات كلمات القرآن</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Amiri:wght@400;700&family=Tajawal:wght@300;400;500;700&display=swap');
+
+:root {
+  --bg: #0f172a;
+  --surface: #1e293b;
+  --surface2: #334155;
+  --accent: #e94560;
+  --blue: #3b82f6;
+  --green: #22c55e;
+  --gold: #eab308;
+  --text: #f1f5f9;
+  --text2: #94a3b8;
+}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{height:100%;overflow:hidden;}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);display:flex;flex-direction:column;}
+
+/* Toolbar */
+.tb{display:flex;align-items:center;gap:6px;padding:7px 10px;background:var(--surface);border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;flex-wrap:wrap;z-index:100;}
+.tb .g{display:flex;align-items:center;gap:4px;}
+.tb button{background:var(--surface2);color:var(--text);border:1px solid rgba(255,255,255,.08);border-radius:6px;padding:5px 10px;font:13px/1 'Tajawal',sans-serif;cursor:pointer;transition:all .12s;white-space:nowrap;touch-action:manipulation;}
+.tb button:active{transform:scale(.95);}
+.tb button.on{background:var(--accent);border-color:var(--accent);}
+.tb button.grn{background:var(--green);border-color:var(--green);color:#000;}
+.tb button.red{background:#dc2626;}
+.tb input[type=number]{width:58px;background:var(--surface2);color:var(--text);border:1px solid rgba(255,255,255,.1);border-radius:6px;padding:5px 6px;font-size:13px;text-align:center;font-family:inherit;}
+.tb .sep{width:1px;height:22px;background:rgba(255,255,255,.08);margin:0 3px;}
+.tb .lbl{font-size:11px;color:var(--text2);}
+
+/* Main */
+.ma{flex:1;overflow:auto;display:flex;justify-content:center;align-items:flex-start;padding:10px;-webkit-overflow-scrolling:touch;}
+.cw{position:relative;display:inline-block;background:#000;border-radius:8px;overflow:hidden;box-shadow:0 4px 30px rgba(0,0,0,.5);touch-action:none;}
+.cw img{display:block;width:100%;height:auto;pointer-events:none;user-select:none;-webkit-user-drag:none;}
+.cw .ov{position:absolute;top:0;left:0;width:100%;height:100%;}
+
+/* Word Boxes */
+.wb{position:absolute;border:2px solid;border-radius:2px;cursor:pointer;touch-action:none;display:flex;align-items:center;justify-content:center;overflow:hidden;}
+.wb:hover{background:rgba(255,255,255,.12)!important;}
+.wb.sel{border-width:3px;background:rgba(233,69,96,.18)!important;z-index:10;}
+.wb.nomatch{border-style:dashed!important;opacity:.6;}
+.wb .wl{font-family:'Amiri',serif;color:#fff;text-shadow:0 0 4px rgba(0,0,0,.95),0 0 10px rgba(0,0,0,.8),0 1px 2px rgba(0,0,0,1);white-space:nowrap;pointer-events:none;line-height:1;direction:rtl;}
+.wb .wl.err{color:#f87171;font-family:monospace;font-size:9px!important;direction:ltr;}
+
+/* Handles */
+.wb .hd{position:absolute;width:16px;height:16px;background:var(--accent);border:2px solid #fff;border-radius:50%;display:none;z-index:20;touch-action:none;}
+.wb.sel .hd{display:block;}
+.hd.tl{top:-8px;left:-8px;cursor:nw-resize;}
+.hd.tr{top:-8px;right:-8px;cursor:ne-resize;}
+.hd.bl{bottom:-8px;left:-8px;cursor:sw-resize;}
+.hd.br{bottom:-8px;right:-8px;cursor:se-resize;}
+
+/* Info Panel */
+.ip{position:fixed;bottom:0;left:0;right:0;background:var(--surface);border-top:2px solid var(--accent);padding:8px 14px;display:none;gap:10px;align-items:center;flex-wrap:wrap;z-index:200;box-shadow:0 -4px 20px rgba(0,0,0,.5);}
+.ip.vis{display:flex;}
+.ip .fd{display:flex;align-items:center;gap:3px;}
+.ip label{font-size:11px;color:var(--text2);}
+.ip input{background:var(--surface2);color:var(--text);border:1px solid rgba(255,255,255,.12);border-radius:5px;padding:4px 6px;font-size:13px;width:55px;text-align:center;font-family:inherit;}
+.ip .li{width:110px;font:15px 'Amiri',serif;direction:ltr;text-align:center;}
+.ip .wd{font:20px/1.2 'Amiri',serif;color:var(--gold);direction:rtl;min-width:60px;text-align:center;}
+.ip button{border:none;border-radius:6px;padding:5px 12px;font:13px 'Tajawal',sans-serif;cursor:pointer;color:#fff;}
+
+/* Toast */
+.toast{position:fixed;top:55px;left:50%;transform:translateX(-50%) translateY(-20px);padding:7px 18px;border-radius:8px;font-size:13px;opacity:0;transition:all .3s;z-index:999;pointer-events:none;font-weight:500;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* Stats */
+.st{font-size:11px;color:var(--text2);padding:0 4px;}
+.st .mis{color:var(--accent);font-weight:600;}
+
+@media(max-width:600px){
+  .tb{padding:5px 6px;gap:3px;}
+  .tb button{padding:4px 7px;font-size:11px;}
+  .ip{padding:6px 8px;gap:6px;}
+}
+</style>
+</head>
+<body>
+
+<div class="tb">
+  <div class="g">
+    <button onclick="prevPage()">◀</button>
+    <input type="number" id="pgIn" min="1" max="604" value="3" onchange="loadPage(+this.value)">
+    <button onclick="nextPage()">▶</button>
+    <span class="lbl" id="pgCnt"></span>
+  </div>
+  <div class="sep"></div>
+  <div class="g">
+    <button onclick="zoomIn()">+</button>
+    <button onclick="zoomOut()">−</button>
+    <button onclick="zoomFit()">ملائمة</button>
+    <span class="lbl" id="zLbl">100%</span>
+  </div>
+  <div class="sep"></div>
+  <div class="g">
+    <button id="bxBtn" onclick="togBoxes()" class="on">إطارات</button>
+    <button id="lblBtn" onclick="togLabels()" class="on">كلمات</button>
+    <button id="addBtn" onclick="togAdd()">+ إضافة</button>
+    <button class="red" onclick="delSel()">🗑</button>
+  </div>
+  <div class="sep"></div>
+  <div class="g">
+    <button class="grn" onclick="saveAll()">💾 حفظ</button>
+    <span class="st" id="stats"></span>
+  </div>
+</div>
+
+<div class="ma" id="mainArea">
+  <div class="cw" id="cWrap">
+    <img id="pgImg" src="" alt="">
+    <div class="ov" id="ov"></div>
+  </div>
+</div>
+
+<div class="ip" id="infoP">
+  <div class="wd" id="wordDisp"></div>
+  <div class="fd">
+    <label>الموقع:</label>
+    <input class="li" id="locIn" placeholder="sura:ayah:word" dir="ltr">
+  </div>
+  <div class="fd"><label>X:</label><input type="number" id="cX"></div>
+  <div class="fd"><label>Y:</label><input type="number" id="cY"></div>
+  <div class="fd"><label>W:</label><input type="number" id="cW"></div>
+  <div class="fd"><label>H:</label><input type="number" id="cH"></div>
+  <button onclick="applyEdits()" style="background:var(--blue)">تطبيق</button>
+  <button onclick="desel()" style="background:transparent;border:1px solid rgba(255,255,255,.15)">✕</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+let curPage=3,pages=[],pageData=null,coords={},mushaf={};
+let zoom=1,showBoxes=true,showLabels=true,addMode=false,selLoc=null,dirty=false;
+let natW=900,natH=1437,dragState=null;
+
+const COLORS=['#e94560','#3b82f6','#eab308','#22c55e','#a855f7','#f97316','#06b6d4','#ec4899'];
+
+// ── Init ──
+async function init(){
+  const r=await fetch('/api/pages');const d=await r.json();
+  pages=d.pages;
+  document.getElementById('pgCnt').textContent=`/ ${pages.length}`;
+  if(pages.length){curPage=pages[0];document.getElementById('pgIn').value=curPage;loadPage(curPage);}
+  zoomFit();
+}
+
+// ── Page ──
+async function loadPage(n){
+  n=Math.max(1,Math.min(604,n));curPage=n;
+  document.getElementById('pgIn').value=n;
+  const img=document.getElementById('pgImg');
+  img.src=`/api/image/${n}`;
+  await new Promise(r=>{img.onload=r;img.onerror=()=>r();});
+  natW=img.naturalWidth||900;natH=img.naturalHeight||1437;
+  try{
+    const r=await fetch(`/api/page/${n}`);pageData=await r.json();
+    coords=pageData.coords||{};mushaf=pageData.mushaf||{};
+  }catch{pageData={};coords={};mushaf={};}
+  dirty=false;selLoc=null;
+  document.getElementById('infoP').classList.remove('vis');
+  render();updateSize();updateStats();
+}
+function prevPage(){const i=pages.indexOf(curPage);if(i>0)loadPage(pages[i-1]);}
+function nextPage(){const i=pages.indexOf(curPage);if(i<pages.length-1)loadPage(pages[i+1]);}
+
+// ── Zoom ──
+function updateSize(){
+  document.getElementById('cWrap').style.width=(natW*zoom)+'px';
+  document.getElementById('zLbl').textContent=Math.round(zoom*100)+'%';
+}
+function zoomIn(){zoom=Math.min(3,zoom+.15);updateSize();}
+function zoomOut(){zoom=Math.max(.2,zoom-.15);updateSize();}
+function zoomFit(){
+  const a=document.getElementById('mainArea');
+  zoom=Math.min((a.clientWidth-20)/natW,(a.clientHeight-20)/natH);
+  updateSize();
+}
+
+// ── Stats ──
+function updateStats(){
+  const cK=Object.keys(coords),mK=Object.keys(mushaf);
+  const noMatch=cK.filter(l=>!mushaf[l]);
+  const missing=mK.filter(l=>!coords[l]);
+  let h=`إطارات: ${cK.length} | كلمات المصحف: ${mK.length}`;
+  if(noMatch.length) h+=` | <span class="mis">إطار بلا كلمة: ${noMatch.length}</span>`;
+  if(missing.length) h+=` | <span class="mis">كلمة بلا إطار: ${missing.length}</span>`;
+  document.getElementById('stats').innerHTML=h;
+}
+
+// ── Render ──
+function render(){
+  const ov=document.getElementById('ov');ov.innerHTML='';
+  if(!showBoxes)return;
+  const locs=Object.keys(coords);
+  locs.forEach((loc,i)=>{
+    const c=coords[loc];const box=c.h||c;
+    if(!box||box.w===undefined)return;
+    const color=COLORS[i%COLORS.length];
+    const hasMushaf=!!mushaf[loc];
+    const div=document.createElement('div');
+    div.className='wb'+(loc===selLoc?' sel':'')+(hasMushaf?'':' nomatch');
+    div.dataset.loc=loc;
+    div.style.left=(box.x/natW*100)+'%';
+    div.style.top=(box.y/natH*100)+'%';
+    div.style.width=(box.w/natW*100)+'%';
+    div.style.height=(box.h/natH*100)+'%';
+    div.style.borderColor=color;
+
+    if(showLabels){
+      const lbl=document.createElement('span');
+      lbl.className='wl';
+      if(hasMushaf){
+        lbl.textContent=mushaf[loc].word;
+      }else{
+        lbl.textContent=loc;
+        lbl.className='wl err';
+      }
+      // Dynamic font size based on rendered box height
+      const boxHpx=box.h/natH*document.getElementById('cWrap').clientHeight;
+      const boxWpx=box.w/natW*document.getElementById('cWrap').clientWidth;
+      let fs=Math.max(7,Math.min(24,boxHpx*0.5));
+      // Also limit by width (estimate: each Arabic char ~ 0.6em)
+      if(hasMushaf){
+        const charCount=mushaf[loc].word.length;
+        const maxByW=boxWpx/(charCount*0.45);
+        fs=Math.min(fs,Math.max(7,maxByW));
+      }
+      lbl.style.fontSize=fs+'px';
+      div.appendChild(lbl);
+    }
+
+    // Resize handles
+    ['tl','tr','bl','br'].forEach(h=>{
+      const hd=document.createElement('div');
+      hd.className=`hd ${h}`;hd.dataset.handle=h;
+      div.appendChild(hd);
+    });
+    ov.appendChild(div);
+  });
+}
+
+function togBoxes(){showBoxes=!showBoxes;document.getElementById('bxBtn').classList.toggle('on',showBoxes);render();}
+function togLabels(){showLabels=!showLabels;document.getElementById('lblBtn').classList.toggle('on',showLabels);render();}
+
+// ── Add Mode ──
+function togAdd(){
+  addMode=!addMode;
+  const b=document.getElementById('addBtn');
+  b.classList.toggle('on',addMode);
+  b.textContent=addMode?'❌ إلغاء':'+ إضافة';
+  document.getElementById('ov').style.cursor=addMode?'crosshair':'';
+}
+function addBox(px,py){
+  const w=60,h=50;
+  const x=Math.max(0,px-w/2),y=Math.max(0,py-h/2);
+  let newLoc=suggestLoc();
+  coords[newLoc]={h:{x:Math.round(x),y:Math.round(y),w,h}};
+  dirty=true;selLoc=newLoc;
+  render();showInfo(newLoc);togAdd();updateStats();
+  toast('إطار جديد — عدّل الموقع');
+}
+function suggestLoc(){
+  const missing=Object.keys(mushaf).filter(l=>!coords[l]);
+  if(missing.length)return missing[0];
+  let n=1;while(coords[`new:0:${n}`])n++;
+  return `new:0:${n}`;
+}
+
+// ── Delete ──
+function delSel(){
+  if(!selLoc){toast('حدد إطاراً أولاً',1);return;}
+  if(!confirm(`حذف ${selLoc}؟`))return;
+  delete coords[selLoc];dirty=true;selLoc=null;
+  document.getElementById('infoP').classList.remove('vis');
+  render();updateStats();toast('تم الحذف');
+}
+
+// ── Selection ──
+function selectBox(loc){selLoc=loc;render();showInfo(loc);}
+function desel(){selLoc=null;document.getElementById('infoP').classList.remove('vis');render();}
+function showInfo(loc){
+  const p=document.getElementById('infoP');
+  const c=coords[loc];const box=c.h||c;
+  document.getElementById('locIn').value=loc;
+  document.getElementById('cX').value=box.x;
+  document.getElementById('cY').value=box.y;
+  document.getElementById('cW').value=box.w;
+  document.getElementById('cH').value=box.h;
+  const wd=document.getElementById('wordDisp');
+  if(mushaf[loc]){wd.textContent=mushaf[loc].word;wd.style.color='var(--gold)';}
+  else{wd.textContent='⚠ لا كلمة مطابقة';wd.style.color='#f87171';}
+  p.classList.add('vis');
+}
+function applyEdits(){
+  if(!selLoc)return;
+  const nl=document.getElementById('locIn').value.trim();
+  const nx=+document.getElementById('cX').value,ny=+document.getElementById('cY').value;
+  const nw=+document.getElementById('cW').value,nh=+document.getElementById('cH').value;
+  if(nl!==selLoc){
+    if(coords[nl]){toast('الموقع موجود!',1);return;}
+    coords[nl]=coords[selLoc];delete coords[selLoc];selLoc=nl;
+  }
+  const c=coords[selLoc];
+  if(c.h)c.h={x:nx,y:ny,w:nw,h:nh};
+  else coords[selLoc]={h:{x:nx,y:ny,w:nw,h:nh}};
+  dirty=true;render();updateStats();showInfo(selLoc);toast('تم التطبيق');
+}
+
+// ── Save ──
+async function saveAll(){
+  document.getElementById('stats').textContent='جارٍ الحفظ...';
+  try{
+    const r=await fetch(`/api/page/${curPage}/save`,{
+      method:'POST',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({coords})
+    });
+    if(r.ok){dirty=false;toast('تم الحفظ ✓');updateStats();}
+    else toast('خطأ!',1);
+  }catch(e){toast('خطأ: '+e.message,1);}
+}
+
+// ── Pointer (Touch+Mouse) ──
+function getPos(e){
+  const ov=document.getElementById('ov');const rect=ov.getBoundingClientRect();
+  const t=e.touches?e.touches[0]:e;
+  return{px:(t.clientX-rect.left)/rect.width*natW,py:(t.clientY-rect.top)/rect.height*natH};
+}
+function hitTest(px,py){
+  // Check selected first
+  if(selLoc&&coords[selLoc]){
+    const b=coords[selLoc].h||coords[selLoc];
+    if(px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h)return selLoc;
+  }
+  // Then all (reverse order = top-most first)
+  const locs=Object.keys(coords);
+  for(let i=locs.length-1;i>=0;i--){
+    const loc=locs[i];const c=coords[loc];const b=c.h||c;
+    if(b.w===undefined)continue;
+    if(px>=b.x&&px<=b.x+b.w&&py>=b.y&&py<=b.y+b.h)return loc;
+  }
+  return null;
+}
+function hitHandle(px,py){
+  if(!selLoc||!coords[selLoc])return null;
+  const b=coords[selLoc].h||coords[selLoc];
+  const thr=18/zoom;
+  const corners={tl:{x:b.x,y:b.y},tr:{x:b.x+b.w,y:b.y},bl:{x:b.x,y:b.y+b.h},br:{x:b.x+b.w,y:b.y+b.h}};
+  for(const[k,pt]of Object.entries(corners)){
+    if(Math.abs(px-pt.x)<thr&&Math.abs(py-pt.y)<thr)return k;
+  }
+  return null;
+}
+
+const ovEl=document.getElementById('ov');
+function onDown(e){
+  e.preventDefault();const pos=getPos(e);
+  if(addMode){addBox(pos.px,pos.py);return;}
+  const h=hitHandle(pos.px,pos.py);
+  if(h&&selLoc){
+    const b=coords[selLoc].h||coords[selLoc];
+    dragState={type:'resize',handle:h,loc:selLoc,spx:pos.px,spy:pos.py,orig:{...b}};return;
+  }
+  const hit=hitTest(pos.px,pos.py);
+  if(hit){
+    selectBox(hit);
+    const b=coords[hit].h||coords[hit];
+    dragState={type:'move',loc:hit,spx:pos.px,spy:pos.py,orig:{...b}};return;
+  }
+  desel();
+}
+function onMove(e){
+  if(!dragState)return;e.preventDefault();
+  const pos=getPos(e);
+  const dx=pos.px-dragState.spx,dy=pos.py-dragState.spy;
+  const o=dragState.orig;const c=coords[dragState.loc];const b=c.h||c;
+  if(dragState.type==='move'){
+    b.x=Math.round(Math.max(0,Math.min(natW-o.w,o.x+dx)));
+    b.y=Math.round(Math.max(0,Math.min(natH-o.h,o.y+dy)));
+  }else{
+    const hh=dragState.handle;
+    let nx=o.x,ny=o.y,nw=o.w,nh=o.h;
+    if(hh.includes('l')){nx=o.x+dx;nw=o.w-dx;}
+    if(hh.includes('r'))nw=o.w+dx;
+    if(hh.includes('t')){ny=o.y+dy;nh=o.h-dy;}
+    if(hh.includes('b'))nh=o.h+dy;
+    if(nw<10){nw=10;if(hh.includes('l'))nx=o.x+o.w-10;}
+    if(nh<10){nh=10;if(hh.includes('t'))ny=o.y+o.h-10;}
+    b.x=Math.round(nx);b.y=Math.round(ny);b.w=Math.round(nw);b.h=Math.round(nh);
+  }
+  dirty=true;render();if(selLoc===dragState.loc)showInfo(dragState.loc);
+}
+function onUp(){dragState=null;}
+
+ovEl.addEventListener('touchstart',onDown,{passive:false});
+ovEl.addEventListener('touchmove',onMove,{passive:false});
+ovEl.addEventListener('touchend',onUp);
+ovEl.addEventListener('touchcancel',onUp);
+ovEl.addEventListener('mousedown',onDown);
+window.addEventListener('mousemove',onMove);
+window.addEventListener('mouseup',onUp);
+
+// ── Keyboard ──
+document.addEventListener('keydown',e=>{
+  if(e.target.tagName==='INPUT')return;
+  switch(e.key){
+    case'ArrowLeft':nextPage();break;case'ArrowRight':prevPage();break;
+    case'Escape':addMode?togAdd():desel();break;
+    case'Delete':case'Backspace':delSel();break;
+    case'b':case'B':togBoxes();break;case'l':case'L':togLabels();break;
+    case'+':case'=':zoomIn();break;case'-':zoomOut();break;
+    case's':if(e.ctrlKey||e.metaKey){e.preventDefault();saveAll();}break;
+  }
+});
+
+function toast(msg,err){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.background=err?'#dc2626':'#22c55e';
+  t.style.color=err?'#fff':'#000';
+  t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+init();
+</script>
+</body>
+</html>
+"""
+
+
+def main():
+    global IMAGES_DIR, JSON_DIR, MUSHAF_DIR
+    parser = argparse.ArgumentParser(description="Quran Word Coords Viewer v2")
+    parser.add_argument("--images-dir", default="./images")
+    parser.add_argument("--json-dir", default="./output")
+    parser.add_argument("--mushaf-dir", default="./mushaf")
+    parser.add_argument("--host", default="0.0.0.0")
+    parser.add_argument("--port", type=int, default=8000)
+    args = parser.parse_args()
+    IMAGES_DIR = args.images_dir
+    JSON_DIR = args.json_dir
+    MUSHAF_DIR = args.mushaf_dir
+    print(f"📖 Quran Word Coords Viewer v2")
+    print(f"   Images: {IMAGES_DIR}")
+    print(f"   JSON:   {JSON_DIR}")
+    print(f"   Mushaf: {MUSHAF_DIR}")
+    pages = get_available_pages()
+    print(f"   Found {len(pages)} pages")
+    print(f"   Open http://localhost:{args.port}")
+    uvicorn.run(app, host=args.host, port=args.port, log_level="info")
+
+
+if __name__ == "__main__":
+    main()
