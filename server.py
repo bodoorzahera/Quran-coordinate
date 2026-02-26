@@ -4,9 +4,15 @@ import json,os,argparse,glob,shutil
 from fastapi import FastAPI,HTTPException,Request
 from fastapi.responses import HTMLResponse,FileResponse
 import uvicorn
+import sqlite3
 
 app=FastAPI()
-CFG={"img":"./images","js":"./output","mu":"./mushaf"}
+CFG={"img":"./images","js":"./output","mu":"./mushaf","wf":"./word_freq.db"}
+
+def get_wf_conn():
+    p=CFG["wf"]
+    if not os.path.exists(p):return None
+    return sqlite3.connect(p)
 
 def pages_list():
     pp=set()
@@ -54,6 +60,64 @@ async def sv(n:int,req:Request):
     d["coords"]=body.get("coords",{})
     with open(p,"w",encoding="utf-8")as f:json.dump(d,f,ensure_ascii=False,indent=2)
     return{"ok":True}
+
+@app.get("/api/word-freq/page/{n}")
+async def wf_page(n:int):
+    """Get word frequencies for all words on a page."""
+    conn=get_wf_conn()
+    if not conn:return{"freqs":{}}
+    c=conn.cursor()
+    # Get all occurrences on this page with their bare info
+    c.execute("""
+        SELECT wo.location, wv.vocalized, wb.bare, wb.count as bare_count, wv.count as voc_count, wb.bare_id
+        FROM word_occurrence wo
+        JOIN word_vocalized wv ON wv.voc_id=wo.voc_id
+        JOIN word_bare wb ON wb.bare_id=wv.bare_id
+        WHERE wo.page=?
+    """,(n,))
+    freqs={}
+    for loc,voc,bare,bc,vc,bid in c.fetchall():
+        freqs[loc]={"bare":bare,"bare_count":bc,"bare_id":bid}
+    conn.close()
+    return{"freqs":freqs}
+
+@app.get("/api/word-freq/variants/{bare_id}")
+async def wf_variants(bare_id:int):
+    """Get all tashkeel variants for a bare word."""
+    conn=get_wf_conn()
+    if not conn:return{"variants":[]}
+    c=conn.cursor()
+    c.execute("SELECT bare FROM word_bare WHERE bare_id=?",(bare_id,))
+    row=c.fetchone()
+    bare=row[0] if row else ""
+    c.execute("""
+        SELECT voc_id, vocalized, count FROM word_vocalized
+        WHERE bare_id=? ORDER BY count DESC
+    """,(bare_id,))
+    variants=[{"voc_id":r[0],"vocalized":r[1],"count":r[2]} for r in c.fetchall()]
+    conn.close()
+    return{"bare":bare,"bare_id":bare_id,"variants":variants}
+
+@app.get("/api/word-freq/occurrences/{voc_id}")
+async def wf_occurrences(voc_id:int):
+    """Get all occurrences of a specific vocalized word."""
+    conn=get_wf_conn()
+    if not conn:return{"occurrences":[]}
+    c=conn.cursor()
+    c.execute("SELECT vocalized FROM word_vocalized WHERE voc_id=?",(voc_id,))
+    row=c.fetchone()
+    vocalized=row[0] if row else ""
+    c.execute("""
+        SELECT wo.page, wo.sura, wo.ayah, wo.word_pos, wo.location,
+               COALESCE(sn.name,'') as sura_name
+        FROM word_occurrence wo
+        LEFT JOIN sura_names sn ON sn.sura=wo.sura
+        WHERE wo.voc_id=?
+        ORDER BY wo.sura, wo.ayah, wo.word_pos
+    """,(voc_id,))
+    occs=[{"page":r[0],"sura":r[1],"ayah":r[2],"word_pos":r[3],"location":r[4],"sura_name":r[5]} for r in c.fetchall()]
+    conn.close()
+    return{"vocalized":vocalized,"voc_id":voc_id,"occurrences":occs}
 
 HTML=r"""<!DOCTYPE html>
 <html lang="ar" dir="rtl">
@@ -117,10 +181,10 @@ body{font-family:'Tajawal',sans-serif;background:var(--vpbg);color:var(--tx)}
 .pf .ov{position:absolute;top:0;left:0;width:100%;height:100%}
 
 /* ══════ WORD BOXES ══════ */
-.wb{position:absolute;border:2px solid;border-radius:2px;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer}
+.wb{position:absolute;border:2px solid;border-radius:2px;display:flex;align-items:center;justify-content:center;overflow:visible;cursor:pointer}
 .wb:hover{filter:brightness(1.25)}.wb.sel{border-width:3px;z-index:10;filter:brightness(1.4)}
 .wb.nomatch{border-style:dashed!important;opacity:.55}
-.wb .wl{font-family:'Amiri',serif;color:#fff;white-space:nowrap;pointer-events:none;line-height:1;direction:rtl;padding:1px 4px;border-radius:2px;background:rgba(0,0,0,.55)}
+.wb .wl{font-family:'Amiri',serif;color:#fff;white-space:nowrap;pointer-events:none;line-height:1;direction:rtl;padding:1px 4px;border-radius:2px;background:rgba(0,0,0,.55);overflow:hidden;text-overflow:ellipsis;max-width:100%}
 .wb .wl.err{background:rgba(220,38,38,.6);color:#fca5a5;font-family:monospace;font-size:9px!important;direction:ltr}
 .wb .hd{position:absolute;width:20px;height:20px;background:var(--ac);border:2px solid #fff;border-radius:50%;display:none;z-index:20;touch-action:none}
 .wb.sel .hd{display:block}
@@ -157,6 +221,63 @@ body{font-family:'Tajawal',sans-serif;background:var(--vpbg);color:var(--tx)}
 /* ══════ TOAST ══════ */
 .toast{position:fixed;top:60px;left:50%;transform:translateX(-50%) translateY(-20px);padding:8px 20px;border-radius:8px;font-size:14px;opacity:0;transition:all .3s;z-index:999;pointer-events:none;font-weight:600}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ══════ WORD FREQ BADGE ══════ */
+.wf-badge{
+  position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);
+  background:rgba(59,130,246,0.85);color:#fff;font-size:9px;
+  padding:1px 5px;border-radius:8px;cursor:pointer;
+  font-family:'Tajawal',sans-serif;white-space:nowrap;pointer-events:auto;
+  z-index:5;line-height:1.3;min-width:18px;text-align:center;
+}
+.wf-badge:hover{background:rgba(59,130,246,1);transform:translateX(-50%) scale(1.15)}
+
+/* ══════ WORD FREQ POPUP ══════ */
+#wfPopup{
+  position:fixed;z-index:300;background:var(--sf);border:2px solid var(--ac);
+  border-radius:12px;padding:0;min-width:280px;max-width:90vw;max-height:70vh;
+  box-shadow:0 10px 40px rgba(0,0,0,.5);display:none;overflow:hidden;
+  font-family:'Tajawal',sans-serif;
+}
+#wfPopup.vis{display:flex;flex-direction:column}
+#wfPopup .wfh{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;background:var(--ac);color:#fff;font-size:16px;
+}
+#wfPopup .wfh .wfw{font-family:'Amiri',serif;font-size:22px;direction:rtl}
+#wfPopup .wfh .wfc{font-size:13px;opacity:.85}
+#wfPopup .wfh button{background:none;border:none;color:#fff;font-size:20px;cursor:pointer;padding:2px 6px}
+#wfPopup .wfb{overflow-y:auto;max-height:55vh;padding:8px}
+.var-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:8px 10px;margin:3px 0;border-radius:8px;background:var(--sf2);
+  cursor:pointer;transition:background .1s;gap:8px;
+}
+.var-row:hover{background:var(--ac);color:#fff}
+.var-row .vw{font-family:'Amiri',serif;font-size:20px;direction:rtl;flex:1}
+.var-row .vc{background:var(--bl);color:#fff;padding:2px 10px;border-radius:12px;font-size:13px;font-weight:700;min-width:32px;text-align:center}
+
+/* ══════ OCCURRENCES POPUP ══════ */
+#occPopup{
+  position:fixed;z-index:310;background:var(--sf);border:2px solid var(--gd);
+  border-radius:12px;padding:0;min-width:300px;max-width:92vw;max-height:75vh;
+  box-shadow:0 10px 40px rgba(0,0,0,.5);display:none;overflow:hidden;
+}
+#occPopup.vis{display:flex;flex-direction:column}
+#occPopup .occh{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;background:var(--gd);color:#000;font-size:15px;
+}
+#occPopup .occh .occw{font-family:'Amiri',serif;font-size:20px;direction:rtl}
+#occPopup .occb{overflow-y:auto;max-height:60vh;padding:6px}
+.occ-row{
+  display:flex;align-items:center;gap:8px;
+  padding:7px 10px;margin:2px 0;border-radius:6px;background:var(--sf2);
+  cursor:pointer;transition:background .1s;font-size:14px;
+}
+.occ-row:hover{background:var(--bl);color:#fff}
+.occ-row .occ-sura{font-weight:700;min-width:80px}
+.occ-row .occ-ref{color:var(--tx2);font-size:12px;direction:ltr}
 </style>
 </head>
 <body>
@@ -236,6 +357,24 @@ body{font-family:'Tajawal',sans-serif;background:var(--vpbg);color:var(--tx)}
 
 <div class="toast" id="toast"></div>
 
+<!-- Word Frequency Popup: shows tashkeel variants -->
+<div id="wfPopup">
+ <div class="wfh">
+  <div><span class="wfw" id="wfWord"></span> <span class="wfc" id="wfCount"></span></div>
+  <button onclick="closeWf()">✕</button>
+ </div>
+ <div class="wfb" id="wfBody"></div>
+</div>
+
+<!-- Occurrences Popup: shows all locations of a variant -->
+<div id="occPopup">
+ <div class="occh">
+  <div><span class="occw" id="occWord"></span> <span id="occCount" style="font-size:13px"></span></div>
+  <button onclick="closeOcc()" style="background:none;border:none;color:#000;font-size:20px;cursor:pointer">✕</button>
+ </div>
+ <div class="occb" id="occBody"></div>
+</div>
+
 <script>
 const $=id=>document.getElementById(id);
 
@@ -243,6 +382,7 @@ const $=id=>document.getElementById(id);
 let curPage=1,pages=[],coords={},mushaf={};
 let showBoxes=true,showLabels=true,addMode=false,selLoc=null,dirty=false;
 let editLocked=true,natW=900,natH=1437;
+let wordFreqs={}; // location → {bare, bare_count, bare_id}
 const MARGIN=80;
 let vx=0,vy=0,vs=1,interaction=null;
 
@@ -306,6 +446,9 @@ async function loadPage(n){
   img.style.width=natW+'px';img.style.height=natH+'px';
   try{const r=await fetch(`/api/page/${n}`);const d=await r.json();coords=d.coords||{};mushaf=d.mushaf||{};}
   catch{coords={};mushaf={};}
+  // Load word frequencies
+  try{const r=await fetch(`/api/word-freq/page/${n}`);const d=await r.json();wordFreqs=d.freqs||{};}
+  catch{wordFreqs={};}
   dirty=false;selLoc=null;$('infoP').classList.remove('vis');
   zoomFit();render();updateStats();
 }
@@ -352,6 +495,16 @@ function render(){
       lbl.style.fontSize=fs+'px';div.appendChild(lbl);
     }
     if(!editLocked&&isSel)['tl','tr','bl','br'].forEach(h=>{const hd=document.createElement('div');hd.className=`hd ${h}`;hd.dataset.handle=h;div.appendChild(hd);});
+    // Word frequency badge
+    if(showLabels&&wordFreqs[loc]){
+      const wf=wordFreqs[loc];
+      const badge=document.createElement('div');
+      badge.className='wf-badge';
+      badge.textContent=wf.bare_count;
+      badge.title=wf.bare+' × '+wf.bare_count;
+      badge.addEventListener('pointerdown',ev=>{ev.stopPropagation();ev.preventDefault();openWf(wf.bare_id,ev.clientX,ev.clientY);});
+      div.appendChild(badge);
+    }
     ov.appendChild(div);
   });
 }
@@ -471,7 +624,11 @@ function onMove(e){
   if(interaction.type==='drag'){
     const nat=s2n(tt[0].x,tt[0].y),dx=nat.px-interaction.spx,dy=nat.py-interaction.spy,o=interaction.orig,b=(coords[interaction.loc].h||coords[interaction.loc]);
     b.x=Math.round(Math.max(0,Math.min(natW-o.w,o.x+dx)));b.y=Math.round(Math.max(0,Math.min(natH-o.h,o.y+dy)));
-    dirty=true;render();showInfo(interaction.loc);return;
+    dirty=true;
+    // Update DOM directly instead of full render
+    const el=document.querySelector(`.wb[data-loc="${CSS.escape(interaction.loc)}"]`);
+    if(el){el.style.left=(b.x/natW*100)+'%';el.style.top=(b.y/natH*100)+'%';}
+    showInfo(interaction.loc);return;
   }
   if(interaction.type==='resize'){
     const nat=s2n(tt[0].x,tt[0].y),dx=nat.px-interaction.spx,dy=nat.py-interaction.spy,o=interaction.orig,b=(coords[interaction.loc].h||coords[interaction.loc]);
@@ -480,13 +637,18 @@ function onMove(e){
     if(hh.includes('t')){ny=o.y+dy;nh=o.h-dy;}if(hh.includes('b'))nh=o.h+dy;
     if(nw<10){nw=10;if(hh.includes('l'))nx=o.x+o.w-10;}if(nh<10){nh=10;if(hh.includes('t'))ny=o.y+o.h-10;}
     b.x=Math.round(nx);b.y=Math.round(ny);b.w=Math.round(nw);b.h=Math.round(nh);
-    dirty=true;render();showInfo(interaction.loc);return;
+    dirty=true;
+    const el=document.querySelector(`.wb[data-loc="${CSS.escape(interaction.loc)}"]`);
+    if(el){el.style.left=(b.x/natW*100)+'%';el.style.top=(b.y/natH*100)+'%';el.style.width=(b.w/natW*100)+'%';el.style.height=(b.h/natH*100)+'%';}
+    showInfo(interaction.loc);return;
   }
 }
 function onUp(e){
+  const hadDrag=interaction&&(interaction.type==='drag'||interaction.type==='resize');
   const rem=e.touches?e.touches.length:0;
   if(rem===0)interaction=null;
   else if(rem===1&&interaction&&interaction.type==='pinch'){const t=e.touches[0];interaction={type:'pan',sx:t.clientX,sy:t.clientY,vx0:vx,vy0:vy};}
+  if(hadDrag)render();
 }
 
 // ─── Keyboard ───
@@ -503,6 +665,74 @@ document.addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;
 
 function toast(m,err){const t=$('toast');t.textContent=m;t.style.background=err?'#dc2626':'#22c55e';t.style.color=err?'#fff':'#000';t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200);}
 
+// ─── Word Frequency Popups ───
+async function openWf(bareId,cx,cy){
+  const popup=$('wfPopup');
+  try{
+    const r=await fetch(`/api/word-freq/variants/${bareId}`);
+    const d=await r.json();
+    $('wfWord').textContent=d.bare;
+    const total=d.variants.reduce((s,v)=>s+v.count,0);
+    $('wfCount').textContent=`× ${total}`;
+    const body=$('wfBody');body.innerHTML='';
+    d.variants.forEach(v=>{
+      const row=document.createElement('div');row.className='var-row';
+      row.innerHTML=`<span class="vw">${v.vocalized}</span><span class="vc">${v.count}</span>`;
+      row.addEventListener('click',()=>openOcc(v.voc_id,v.vocalized));
+      body.appendChild(row);
+    });
+    const vw=window.innerWidth,vh=window.innerHeight;
+    let px=Math.min(cx,vw-300),py=Math.min(cy,vh-300);
+    if(px<10)px=10;if(py<50)py=50;
+    popup.style.left=px+'px';popup.style.top=py+'px';
+    popup.className='vis';
+  }catch(e){toast('خطأ في التحميل',1);}
+}
+function closeWf(){$('wfPopup').className='';}
+
+async function openOcc(vocId,vocalized){
+  closeWf();
+  const popup=$('occPopup');
+  try{
+    const r=await fetch(`/api/word-freq/occurrences/${vocId}`);
+    const d=await r.json();
+    $('occWord').textContent=d.vocalized||vocalized;
+    $('occCount').textContent=`(${d.occurrences.length} موضع)`;
+    const body=$('occBody');body.innerHTML='';
+    d.occurrences.forEach(o=>{
+      const row=document.createElement('div');row.className='occ-row';
+      row.innerHTML=`<span class="occ-sura">${o.sura_name||'سورة '+o.sura}</span>`
+        +`<span>آية ${o.ayah}</span>`
+        +`<span class="occ-ref">ص${o.page} [${o.location}]</span>`;
+      row.addEventListener('click',()=>{
+        closeOcc();
+        if(pages.includes(o.page)){
+          loadPage(o.page).then(()=>{
+            if(coords[o.location]){
+              selectBox(o.location);
+              const b=(coords[o.location].h||coords[o.location]);
+              const v=$('vp');
+              vx=v.clientWidth/2-b.x*vs-b.w*vs/2;
+              vy=v.clientHeight/2-b.y*vs-b.h*vs/2;
+              applyView();render();
+            }
+          });
+        }else{toast(`الصفحة ${o.page} غير متاحة`,1);}
+      });
+      body.appendChild(row);
+    });
+    const vw=window.innerWidth,vh=window.innerHeight;
+    popup.style.left=Math.max(10,Math.min(vw-320,vw/2-150))+'px';
+    popup.style.top=Math.max(50,vh/2-200)+'px';
+    popup.className='vis';
+  }catch(e){toast('خطأ في التحميل',1);}
+}
+function closeOcc(){$('occPopup').className='';}
+document.addEventListener('pointerdown',e=>{
+  if($('wfPopup').classList.contains('vis')&&!$('wfPopup').contains(e.target))closeWf();
+  if($('occPopup').classList.contains('vis')&&!$('occPopup').contains(e.target))closeOcc();
+});
+
 $('editRow').style.display='none';
 init();
 </script>
@@ -517,8 +747,9 @@ def main():
     parser.add_argument("--mushaf-dir",default="./mushaf")
     parser.add_argument("--host",default="0.0.0.0")
     parser.add_argument("--port",type=int,default=8006)
+    parser.add_argument("--word-freq-db",default="./word_freq.db")
     a=parser.parse_args()
-    CFG["img"]=a.images_dir;CFG["js"]=a.json_dir;CFG["mu"]=a.mushaf_dir
+    CFG["img"]=a.images_dir;CFG["js"]=a.json_dir;CFG["mu"]=a.mushaf_dir;CFG["wf"]=a.word_freq_db
     print(f"📖 Quran Coords v6 → http://localhost:{a.port}")
     uvicorn.run(app,host=a.host,port=a.port,log_level="info")
 
