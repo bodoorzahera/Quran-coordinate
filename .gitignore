@@ -3,19 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
-.Python
-*.egg
-*.egg-info/
-dist/
-build/
-*.whl
 
 # Virtual Environment
 venv/
 env/
-ENV/
 .venv/
-.env
 
 # IDEs
 .vscode/
@@ -23,97 +15,30 @@ ENV/
 *.swp
 *.swo
 *~
-.project
-.pydevproject
-.settings/
 
 # OS
 .DS_Store
-.DS_Store?
-._*
-.Spotlight-V100
-.Trashes
-ehthumbs.db
 Thumbs.db
-desktop.ini
 
-# Database
+# Databases (generated, large)
 *.db
 *.db-journal
-*.sqlite
-*.sqlite3
-quran.db
 
-# Logs
-*.log
-logs/
-*.out
-
-# Temporary files
+# Temporary / Backup files
 *.tmp
-*.temp
 *.bak
 *.cache
 
-# Coverage reports
-htmlcov/
-.coverage
-.coverage.*
-coverage.xml
-*.cover
+# Old version files
+*.py.v*
+*.py.l
 
-# pytest
-.pytest_cache/
-.tox/
+# Generated debug images
+output/debug-*.png
 
-# Jupyter Notebook
-.ipynb_checkpoints
+# Large image files (not tracked in git)
+images/
+mushaf/
 
-# Generated files
-coords/*.json
-!coords/.gitkeep
-
-# Backup files
-backup_*/
-*.zip
-!project.zip
-
-# Node modules (if any)
-node_modules/
-
-# Environment variables
-.env
-.env.local
-.env.*.local
-
-# Documentation builds
-docs/_build/
-site/
-
-# Project specific
-test_output/
-debug/
-
-# Large image files (uncomment if images are too large for git)
-# images/*.png
-# images/*.jpg
-
-# Compiled translations
-*.mo
-
-# Pytest
-.pytest_cache/
-
-# MyPy
-.mypy_cache/
-.dmypy.json
-dmypy.json
-
-# Pyre type checker
-.pyre/
-
-# pytype static type analyzer
-.pytype/
-
-# Cython debug symbols
-cython_debug/
+# Output old
+output.old/

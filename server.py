@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
 """Quran Word Coordinate Viewer & Editor v6"""
-import json,os,argparse,glob,shutil
+import json,os,argparse,glob,shutil,sqlite3
 from fastapi import FastAPI,HTTPException,Request
 from fastapi.responses import HTMLResponse,FileResponse
 import uvicorn
-import sqlite3
 
 app=FastAPI()
 CFG={"img":"./images","js":"./output","mu":"./mushaf","wf":"./word_freq.db"}
@@ -224,13 +223,14 @@ body{font-family:'Tajawal',sans-serif;background:var(--vpbg);color:var(--tx)}
 
 /* ══════ WORD FREQ BADGE ══════ */
 .wf-badge{
-  position:absolute;bottom:-16px;left:50%;transform:translateX(-50%);
-  background:rgba(59,130,246,0.85);color:#fff;font-size:9px;
-  padding:1px 5px;border-radius:8px;cursor:pointer;
+  position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);
+  background:rgba(37,99,235,0.9);color:#fff;font-size:13px;font-weight:700;
+  padding:2px 8px;border-radius:10px;cursor:pointer;
   font-family:'Tajawal',sans-serif;white-space:nowrap;pointer-events:auto;
-  z-index:5;line-height:1.3;min-width:18px;text-align:center;
+  z-index:5;line-height:1.4;min-width:24px;text-align:center;
+  box-shadow:0 2px 6px rgba(0,0,0,.3);
 }
-.wf-badge:hover{background:rgba(59,130,246,1);transform:translateX(-50%) scale(1.15)}
+.wf-badge:hover{background:rgba(37,99,235,1);transform:translateX(-50%) scale(1.2)}
 
 /* ══════ WORD FREQ POPUP ══════ */
 #wfPopup{
@@ -313,6 +313,11 @@ body{font-family:'Tajawal',sans-serif;background:var(--vpbg);color:var(--tx)}
   <button class="btn" onclick="uiZoom(-1)">A−</button>
   <button class="btn" onclick="uiZoom(1)">A+</button>
   <button class="btn" id="themeBtn" onclick="togTheme()">☀️</button>
+ </div><div class="sep"></div>
+ <div class="g">
+  <span class="lbl">أرقام</span>
+  <button class="btn" onclick="badgeZoom(-1)" style="padding:3px 8px">−</button>
+  <button class="btn" onclick="badgeZoom(1)" style="padding:3px 8px">+</button>
  </div>
 </div>
 
@@ -386,6 +391,10 @@ let wordFreqs={}; // location → {bare, bare_count, bare_id}
 const MARGIN=80;
 let vx=0,vy=0,vs=1,interaction=null;
 
+// Badge size
+const BADGE_SIZES=[8,10,13,16,20,24,30];
+let badgeIdx=2; // default 13px
+
 // UI scale
 const UI_S=[0.75,0.85,1,1.15,1.3,1.5,1.7];
 let uiIdx=2;
@@ -406,6 +415,7 @@ async function init(){
   pages=d.pages;$('pgCnt').textContent=`/ ${pages.length}`;
   // Restore prefs
   const su=localStorage.getItem('uiIdx');if(su!=null)uiIdx=+su;
+  const sb=localStorage.getItem('badgeIdx');if(sb!=null)badgeIdx=+sb;
   const st=localStorage.getItem('theme');if(st==='light'){darkMode=false;document.documentElement.dataset.theme='light';$('themeBtn').textContent='🌙';}
   applyUi();
   if(pages.length){curPage=pages[0];$('pgIn').value=curPage;await loadPage(curPage);}
@@ -420,6 +430,7 @@ function togTheme(){
 
 // ─── UI Scale ───
 function uiZoom(d){uiIdx=Math.max(0,Math.min(UI_S.length-1,uiIdx+d));applyUi();localStorage.setItem('uiIdx',uiIdx);}
+function badgeZoom(d){badgeIdx=Math.max(0,Math.min(BADGE_SIZES.length-1,badgeIdx+d));localStorage.setItem('badgeIdx',badgeIdx);render();}
 function applyUi(){
   const s=UI_S[uiIdx];
   $('toolbar').style.fontSize=(15*s)+'px';
@@ -502,6 +513,10 @@ function render(){
       badge.className='wf-badge';
       badge.textContent=wf.bare_count;
       badge.title=wf.bare+' × '+wf.bare_count;
+      const bfs=BADGE_SIZES[badgeIdx];
+      badge.style.fontSize=bfs+'px';
+      badge.style.padding=Math.max(1,bfs*0.15)+'px '+Math.max(4,bfs*0.6)+'px';
+      badge.style.bottom=(-bfs*1.5)+'px';
       badge.addEventListener('pointerdown',ev=>{ev.stopPropagation();ev.preventDefault();openWf(wf.bare_id,ev.clientX,ev.clientY);});
       div.appendChild(badge);
     }
@@ -746,7 +761,7 @@ def main():
     parser.add_argument("--json-dir",default="./output")
     parser.add_argument("--mushaf-dir",default="./mushaf")
     parser.add_argument("--host",default="0.0.0.0")
-    parser.add_argument("--port",type=int,default=8006)
+    parser.add_argument("--port",type=int,default=8003)
     parser.add_argument("--word-freq-db",default="./word_freq.db")
     a=parser.parse_args()
     CFG["img"]=a.images_dir;CFG["js"]=a.json_dir;CFG["mu"]=a.mushaf_dir;CFG["wf"]=a.word_freq_db

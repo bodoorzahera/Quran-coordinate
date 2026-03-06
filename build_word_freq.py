@@ -19,8 +19,15 @@ USAGE:
 import json, os, sys, re, sqlite3, argparse, glob, unicodedata
 
 
+def strip_trailing_digits(word):
+    """Remove trailing digits (Western, Arabic-Indic, Extended Arabic-Indic) from word."""
+    return re.sub(r'[\d\u0660-\u0669\u06F0-\u06F9]+$', '', word)
+
+
 def strip_tashkeel(word):
     """Remove all Arabic diacritics/tashkeel, normalize letters."""
+    # First strip trailing digits (ayah numbers attached to words)
+    word = strip_trailing_digits(word)
     result = ''
     for ch in word:
         cat = unicodedata.category(ch)
@@ -139,7 +146,7 @@ def build_db(mushaf_dir, db_path):
         for line in data.get("lines", []):
             for w in line.get("words", []):
                 location = w.get("location", "")
-                vocalized = w.get("word", "").strip()
+                vocalized = strip_trailing_digits(w.get("word", "").strip())
                 if not location or not vocalized:
                     continue
 
