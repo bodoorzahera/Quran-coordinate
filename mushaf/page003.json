@@ -1,0 +1,1156 @@
+{
+  "page": 3,
+  "lines": [
+    {
+      "line": 1,
+      "type": "text",
+      "text": "إِنَّ ٱلَّذِينَ كَفَرُوا۟ سَوَآءٌ عَلَيْهِمْ ءَأَنذَرْتَهُمْ أَمْ لَمْ تُنذِرْهُمْ",
+      "surah": null,
+      "verseRange": "2:6-2:6",
+      "words": [
+        {
+          "location": "2:6:1",
+          "word": "إِنَّ",
+          "qpcV1": "ﭑ",
+          "qpcV2": "ﱁ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:6:2",
+          "word": "ٱلَّذِينَ",
+          "qpcV1": "ﭒ",
+          "qpcV2": "ﱂ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:6:3",
+          "word": "كَفَرُوا۟",
+          "qpcV1": "ﭓ",
+          "qpcV2": "ﱃ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:6:4",
+          "word": "سَوَآءٌ",
+          "qpcV1": "ﭔ",
+          "qpcV2": "ﱄ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:6:5",
+          "word": "عَلَيْهِمْ",
+          "qpcV1": "ﭕ",
+          "qpcV2": "ﱅ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:6:6",
+          "word": "ءَأَنذَرْتَهُمْ",
+          "qpcV1": "ﭖ",
+          "qpcV2": "ﱆ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:6:7",
+          "word": "أَمْ",
+          "qpcV1": "ﭗ",
+          "qpcV2": "ﱇ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:6:8",
+          "word": "لَمْ",
+          "qpcV1": "ﭘ",
+          "qpcV2": "ﱈ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:6:9",
+          "word": "تُنذِرْهُمْ",
+          "qpcV1": "ﭙ",
+          "qpcV2": "ﱉ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 2,
+      "type": "text",
+      "text": "لَا يُؤْمِنُونَ ٦ خَتَمَ ٱللَّهُ عَلَىٰ قُلُوبِهِمْ وَعَلَىٰ سَمْعِهِمْ ۖ وَعَلَىٰٓ",
+      "surah": null,
+      "verseRange": "2:6-2:7",
+      "words": [
+        {
+          "location": "2:6:10",
+          "word": "لَا",
+          "qpcV1": "ﭚ",
+          "qpcV2": "ﱊ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:6:11",
+          "word": "يُؤْمِنُونَ ٦",
+          "qpcV1": "ﭛ ﭜ",
+          "qpcV2": "ﱋ ﱌ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:7:1",
+          "word": "خَتَمَ",
+          "qpcV1": "ﭝ",
+          "qpcV2": "ﱍ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:7:2",
+          "word": "ٱللَّهُ",
+          "qpcV1": "ﭞ",
+          "qpcV2": "ﱎ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:7:3",
+          "word": "عَلَىٰ",
+          "qpcV1": "ﭟ",
+          "qpcV2": "ﱏ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:7:4",
+          "word": "قُلُوبِهِمْ",
+          "qpcV1": "ﭠ",
+          "qpcV2": "ﱐ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:7:5",
+          "word": "وَعَلَىٰ",
+          "qpcV1": "ﭡ",
+          "qpcV2": "ﱑ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:7:6",
+          "word": "سَمْعِهِمْ ۖ",
+          "qpcV1": "ﭢﭣ",
+          "qpcV2": "ﱒﱓ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:7:7",
+          "word": "وَعَلَىٰٓ",
+          "qpcV1": "ﭤ",
+          "qpcV2": "ﱔ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 3,
+      "type": "text",
+      "text": "أَبْصَـٰرِهِمْ غِشَـٰوَةٌۭ ۖ وَلَهُمْ عَذَابٌ عَظِيمٌۭ ٧ وَمِنَ ٱلنَّاسِ",
+      "surah": null,
+      "verseRange": "2:7-2:8",
+      "words": [
+        {
+          "location": "2:7:8",
+          "word": "أَبْصَـٰرِهِمْ",
+          "qpcV1": "ﭥ",
+          "qpcV2": "ﱕ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:7:9",
+          "word": "غِشَـٰوَةٌۭ ۖ",
+          "qpcV1": "ﭦﭧ",
+          "qpcV2": "ﱖﱗ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:7:10",
+          "word": "وَلَهُمْ",
+          "qpcV1": "ﭨ",
+          "qpcV2": "ﱘ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:7:11",
+          "word": "عَذَابٌ",
+          "qpcV1": "ﭩ",
+          "qpcV2": "ﱙ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:7:12",
+          "word": "عَظِيمٌۭ ٧",
+          "qpcV1": "ﭪ ﭫ",
+          "qpcV2": "ﱚ ﱛ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:8:1",
+          "word": "وَمِنَ",
+          "qpcV1": "ﭬ",
+          "qpcV2": "ﱜ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:8:2",
+          "word": "ٱلنَّاسِ",
+          "qpcV1": "ﭭ",
+          "qpcV2": "ﱝ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 4,
+      "type": "text",
+      "text": "مَن يَقُولُ ءَامَنَّا بِٱللَّهِ وَبِٱلْيَوْمِ ٱلْـَٔاخِرِ وَمَا هُم بِمُؤْمِنِينَ ٨",
+      "surah": null,
+      "verseRange": "2:8-2:8",
+      "words": [
+        {
+          "location": "2:8:3",
+          "word": "مَن",
+          "qpcV1": "ﭮ",
+          "qpcV2": "ﱞ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:8:4",
+          "word": "يَقُولُ",
+          "qpcV1": "ﭯ",
+          "qpcV2": "ﱟ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:8:5",
+          "word": "ءَامَنَّا",
+          "qpcV1": "ﭰ",
+          "qpcV2": "ﱠ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:8:6",
+          "word": "بِٱللَّهِ",
+          "qpcV1": "ﭱ",
+          "qpcV2": "ﱡ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:8:7",
+          "word": "وَبِٱلْيَوْمِ",
+          "qpcV1": "ﭲ",
+          "qpcV2": "ﱢ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:8:8",
+          "word": "ٱلْـَٔاخِرِ",
+          "qpcV1": "ﭳ",
+          "qpcV2": "ﱣ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:8:9",
+          "word": "وَمَا",
+          "qpcV1": "ﭴ",
+          "qpcV2": "ﱤ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:8:10",
+          "word": "هُم",
+          "qpcV1": "ﭵ",
+          "qpcV2": "ﱥ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:8:11",
+          "word": "بِمُؤْمِنِينَ ٨",
+          "qpcV1": "ﭶ ﭷ",
+          "qpcV2": "ﱦ ﱧ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 5,
+      "type": "text",
+      "text": "يُخَـٰدِعُونَ ٱللَّهَ وَٱلَّذِينَ ءَامَنُوا۟ وَمَا يَخْدَعُونَ إِلَّآ أَنفُسَهُمْ",
+      "surah": null,
+      "verseRange": "2:9-2:9",
+      "words": [
+        {
+          "location": "2:9:1",
+          "word": "يُخَـٰدِعُونَ",
+          "qpcV1": "ﭸ",
+          "qpcV2": "ﱨ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:9:2",
+          "word": "ٱللَّهَ",
+          "qpcV1": "ﭹ",
+          "qpcV2": "ﱩ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:9:3",
+          "word": "وَٱلَّذِينَ",
+          "qpcV1": "ﭺ",
+          "qpcV2": "ﱪ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:9:4",
+          "word": "ءَامَنُوا۟",
+          "qpcV1": "ﭻ",
+          "qpcV2": "ﱫ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:9:5",
+          "word": "وَمَا",
+          "qpcV1": "ﭼ",
+          "qpcV2": "ﱬ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:9:6",
+          "word": "يَخْدَعُونَ",
+          "qpcV1": "ﭽ",
+          "qpcV2": "ﱭ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:9:7",
+          "word": "إِلَّآ",
+          "qpcV1": "ﭾ",
+          "qpcV2": "ﱮ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:9:8",
+          "word": "أَنفُسَهُمْ",
+          "qpcV1": "ﭿ",
+          "qpcV2": "ﱯ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 6,
+      "type": "text",
+      "text": "وَمَا يَشْعُرُونَ ٩ فِى قُلُوبِهِم مَّرَضٌۭ فَزَادَهُمُ ٱللَّهُ مَرَضًۭا ۖ",
+      "surah": null,
+      "verseRange": "2:9-2:10",
+      "words": [
+        {
+          "location": "2:9:9",
+          "word": "وَمَا",
+          "qpcV1": "ﮀ",
+          "qpcV2": "ﱰ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:9:10",
+          "word": "يَشْعُرُونَ ٩",
+          "qpcV1": "ﮁ ﮂ",
+          "qpcV2": "ﱱ ﱲ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:10:1",
+          "word": "فِى",
+          "qpcV1": "ﮃ",
+          "qpcV2": "ﱳ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:10:2",
+          "word": "قُلُوبِهِم",
+          "qpcV1": "ﮄ",
+          "qpcV2": "ﱴ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:10:3",
+          "word": "مَّرَضٌۭ",
+          "qpcV1": "ﮅ",
+          "qpcV2": "ﱵ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:10:4",
+          "word": "فَزَادَهُمُ",
+          "qpcV1": "ﮆ",
+          "qpcV2": "ﱶ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:10:5",
+          "word": "ٱللَّهُ",
+          "qpcV1": "ﮇ",
+          "qpcV2": "ﱷ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:10:6",
+          "word": "مَرَضًۭا ۖ",
+          "qpcV1": "ﮈﮉ",
+          "qpcV2": "ﱸﱹ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 7,
+      "type": "text",
+      "text": "وَلَهُمْ عَذَابٌ أَلِيمٌۢ بِمَا كَانُوا۟ يَكْذِبُونَ ١٠ وَإِذَا قِيلَ لَهُمْ",
+      "surah": null,
+      "verseRange": "2:10-2:11",
+      "words": [
+        {
+          "location": "2:10:7",
+          "word": "وَلَهُمْ",
+          "qpcV1": "ﮊ",
+          "qpcV2": "ﱺ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:10:8",
+          "word": "عَذَابٌ",
+          "qpcV1": "ﮋ",
+          "qpcV2": "ﱻ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:10:9",
+          "word": "أَلِيمٌۢ",
+          "qpcV1": "ﮌ",
+          "qpcV2": "ﱼ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:10:10",
+          "word": "بِمَا",
+          "qpcV1": "ﮍ",
+          "qpcV2": "ﱽ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:10:11",
+          "word": "كَانُوا۟",
+          "qpcV1": "ﮎ",
+          "qpcV2": "ﱾ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:10:12",
+          "word": "يَكْذِبُونَ ١٠",
+          "qpcV1": "ﮏ ﮐ",
+          "qpcV2": "ﱿ ﲀ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:11:1",
+          "word": "وَإِذَا",
+          "qpcV1": "ﮑ",
+          "qpcV2": "ﲁ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:11:2",
+          "word": "قِيلَ",
+          "qpcV1": "ﮒ",
+          "qpcV2": "ﲂ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:11:3",
+          "word": "لَهُمْ",
+          "qpcV1": "ﮓ",
+          "qpcV2": "ﲃ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 8,
+      "type": "text",
+      "text": "لَا تُفْسِدُوا۟ فِى ٱلْأَرْضِ قَالُوٓا۟ إِنَّمَا نَحْنُ مُصْلِحُونَ ١١",
+      "surah": null,
+      "verseRange": "2:11-2:11",
+      "words": [
+        {
+          "location": "2:11:4",
+          "word": "لَا",
+          "qpcV1": "ﮔ",
+          "qpcV2": "ﲄ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:11:5",
+          "word": "تُفْسِدُوا۟",
+          "qpcV1": "ﮕ",
+          "qpcV2": "ﲅ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:11:6",
+          "word": "فِى",
+          "qpcV1": "ﮖ",
+          "qpcV2": "ﲆ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:11:7",
+          "word": "ٱلْأَرْضِ",
+          "qpcV1": "ﮗ",
+          "qpcV2": "ﲇ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:11:8",
+          "word": "قَالُوٓا۟",
+          "qpcV1": "ﮘ",
+          "qpcV2": "ﲈ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:11:9",
+          "word": "إِنَّمَا",
+          "qpcV1": "ﮙ",
+          "qpcV2": "ﲉ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:11:10",
+          "word": "نَحْنُ",
+          "qpcV1": "ﮚ",
+          "qpcV2": "ﲊ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:11:11",
+          "word": "مُصْلِحُونَ ١١",
+          "qpcV1": "ﮛ ﮜ",
+          "qpcV2": "ﲋ ﲌ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 9,
+      "type": "text",
+      "text": "أَلَآ إِنَّهُمْ هُمُ ٱلْمُفْسِدُونَ وَلَـٰكِن لَّا يَشْعُرُونَ ١٢ وَإِذَا قِيلَ",
+      "surah": null,
+      "verseRange": "2:12-2:13",
+      "words": [
+        {
+          "location": "2:12:1",
+          "word": "أَلَآ",
+          "qpcV1": "ﮝ",
+          "qpcV2": "ﲍ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:12:2",
+          "word": "إِنَّهُمْ",
+          "qpcV1": "ﮞ",
+          "qpcV2": "ﲎ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:12:3",
+          "word": "هُمُ",
+          "qpcV1": "ﮟ",
+          "qpcV2": "ﲏ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:12:4",
+          "word": "ٱلْمُفْسِدُونَ",
+          "qpcV1": "ﮠ",
+          "qpcV2": "ﲐ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:12:5",
+          "word": "وَلَـٰكِن",
+          "qpcV1": "ﮡ",
+          "qpcV2": "ﲑ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:12:6",
+          "word": "لَّا",
+          "qpcV1": "ﮢ",
+          "qpcV2": "ﲒ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:12:7",
+          "word": "يَشْعُرُونَ ١٢",
+          "qpcV1": "ﮣ ﮤ",
+          "qpcV2": "ﲓ ﲔ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:1",
+          "word": "وَإِذَا",
+          "qpcV1": "ﮥ",
+          "qpcV2": "ﲕ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:2",
+          "word": "قِيلَ",
+          "qpcV1": "ﮦ",
+          "qpcV2": "ﲖ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 10,
+      "type": "text",
+      "text": "لَهُمْ ءَامِنُوا۟ كَمَآ ءَامَنَ ٱلنَّاسُ قَالُوٓا۟ أَنُؤْمِنُ كَمَآ ءَامَنَ ٱلسُّفَهَآءُ ۗ",
+      "surah": null,
+      "verseRange": "2:13-2:13",
+      "words": [
+        {
+          "location": "2:13:3",
+          "word": "لَهُمْ",
+          "qpcV1": "ﮧ",
+          "qpcV2": "ﲗ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:4",
+          "word": "ءَامِنُوا۟",
+          "qpcV1": "ﮨ",
+          "qpcV2": "ﲘ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:5",
+          "word": "كَمَآ",
+          "qpcV1": "ﮩ",
+          "qpcV2": "ﲙ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:6",
+          "word": "ءَامَنَ",
+          "qpcV1": "ﮪ",
+          "qpcV2": "ﲚ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:7",
+          "word": "ٱلنَّاسُ",
+          "qpcV1": "ﮫ",
+          "qpcV2": "ﲛ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:8",
+          "word": "قَالُوٓا۟",
+          "qpcV1": "ﮬ",
+          "qpcV2": "ﲜ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:9",
+          "word": "أَنُؤْمِنُ",
+          "qpcV1": "ﮭ",
+          "qpcV2": "ﲝ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:10",
+          "word": "كَمَآ",
+          "qpcV1": "ﮮ",
+          "qpcV2": "ﲞ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:11",
+          "word": "ءَامَنَ",
+          "qpcV1": "ﮯ",
+          "qpcV2": "ﲟ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:12",
+          "word": "ٱلسُّفَهَآءُ ۗ",
+          "qpcV1": "ﮰﮱ",
+          "qpcV2": "ﲠﲡ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 11,
+      "type": "text",
+      "text": "أَلَآ إِنَّهُمْ هُمُ ٱلسُّفَهَآءُ وَلَـٰكِن لَّا يَعْلَمُونَ ١٣ وَإِذَا لَقُوا۟",
+      "surah": null,
+      "verseRange": "2:13-2:14",
+      "words": [
+        {
+          "location": "2:13:13",
+          "word": "أَلَآ",
+          "qpcV1": "ﯓ",
+          "qpcV2": "ﲢ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:14",
+          "word": "إِنَّهُمْ",
+          "qpcV1": "ﯔ",
+          "qpcV2": "ﲣ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:15",
+          "word": "هُمُ",
+          "qpcV1": "ﯕ",
+          "qpcV2": "ﲤ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:16",
+          "word": "ٱلسُّفَهَآءُ",
+          "qpcV1": "ﯖ",
+          "qpcV2": "ﲥ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:17",
+          "word": "وَلَـٰكِن",
+          "qpcV1": "ﯗ",
+          "qpcV2": "ﲦ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:18",
+          "word": "لَّا",
+          "qpcV1": "ﯘ",
+          "qpcV2": "ﲧ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:13:19",
+          "word": "يَعْلَمُونَ ١٣",
+          "qpcV1": "ﯙ ﯚ",
+          "qpcV2": "ﲨ ﲩ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:1",
+          "word": "وَإِذَا",
+          "qpcV1": "ﯛ",
+          "qpcV2": "ﲪ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:2",
+          "word": "لَقُوا۟",
+          "qpcV1": "ﯜ",
+          "qpcV2": "ﲫ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 12,
+      "type": "text",
+      "text": "ٱلَّذِينَ ءَامَنُوا۟ قَالُوٓا۟ ءَامَنَّا وَإِذَا خَلَوْا۟ إِلَىٰ شَيَـٰطِينِهِمْ قَالُوٓا۟ إِنَّا",
+      "surah": null,
+      "verseRange": "2:14-2:14",
+      "words": [
+        {
+          "location": "2:14:3",
+          "word": "ٱلَّذِينَ",
+          "qpcV1": "ﯝ",
+          "qpcV2": "ﲬ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:4",
+          "word": "ءَامَنُوا۟",
+          "qpcV1": "ﯞ",
+          "qpcV2": "ﲭ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:5",
+          "word": "قَالُوٓا۟",
+          "qpcV1": "ﯟ",
+          "qpcV2": "ﲮ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:6",
+          "word": "ءَامَنَّا",
+          "qpcV1": "ﯠ",
+          "qpcV2": "ﲯ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:7",
+          "word": "وَإِذَا",
+          "qpcV1": "ﯡ",
+          "qpcV2": "ﲰ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:8",
+          "word": "خَلَوْا۟",
+          "qpcV1": "ﯢ",
+          "qpcV2": "ﲱ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:9",
+          "word": "إِلَىٰ",
+          "qpcV1": "ﯣ",
+          "qpcV2": "ﲲ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:10",
+          "word": "شَيَـٰطِينِهِمْ",
+          "qpcV1": "ﯤ",
+          "qpcV2": "ﲳ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:11",
+          "word": "قَالُوٓا۟",
+          "qpcV1": "ﯥ",
+          "qpcV2": "ﲴ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:12",
+          "word": "إِنَّا",
+          "qpcV1": "ﯦ",
+          "qpcV2": "ﲵ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 13,
+      "type": "text",
+      "text": "مَعَكُمْ إِنَّمَا نَحْنُ مُسْتَهْزِءُونَ ١٤ ٱللَّهُ يَسْتَهْزِئُ بِهِمْ وَيَمُدُّهُمْ",
+      "surah": null,
+      "verseRange": "2:14-2:15",
+      "words": [
+        {
+          "location": "2:14:13",
+          "word": "مَعَكُمْ",
+          "qpcV1": "ﯧ",
+          "qpcV2": "ﲶ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:14",
+          "word": "إِنَّمَا",
+          "qpcV1": "ﯨ",
+          "qpcV2": "ﲷ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:15",
+          "word": "نَحْنُ",
+          "qpcV1": "ﯩ",
+          "qpcV2": "ﲸ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:14:16",
+          "word": "مُسْتَهْزِءُونَ ١٤",
+          "qpcV1": "ﯪ ﯫ",
+          "qpcV2": "ﲹ ﲺ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:15:1",
+          "word": "ٱللَّهُ",
+          "qpcV1": "ﯬ",
+          "qpcV2": "ﲻ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:15:2",
+          "word": "يَسْتَهْزِئُ",
+          "qpcV1": "ﯭ",
+          "qpcV2": "ﲼ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:15:3",
+          "word": "بِهِمْ",
+          "qpcV1": "ﯮ",
+          "qpcV2": "ﲽ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:15:4",
+          "word": "وَيَمُدُّهُمْ",
+          "qpcV1": "ﯯ",
+          "qpcV2": "ﲾ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 14,
+      "type": "text",
+      "text": "فِى طُغْيَـٰنِهِمْ يَعْمَهُونَ ١٥ أُو۟لَـٰٓئِكَ ٱلَّذِينَ ٱشْتَرَوُا۟ ٱلضَّلَـٰلَةَ",
+      "surah": null,
+      "verseRange": "2:15-2:16",
+      "words": [
+        {
+          "location": "2:15:5",
+          "word": "فِى",
+          "qpcV1": "ﯰ",
+          "qpcV2": "ﲿ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:15:6",
+          "word": "طُغْيَـٰنِهِمْ",
+          "qpcV1": "ﯱ",
+          "qpcV2": "ﳀ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:15:7",
+          "word": "يَعْمَهُونَ ١٥",
+          "qpcV1": "ﯲ ﯳ",
+          "qpcV2": "ﳁ ﳂ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:16:1",
+          "word": "أُو۟لَـٰٓئِكَ",
+          "qpcV1": "ﯴ",
+          "qpcV2": "ﳃ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:16:2",
+          "word": "ٱلَّذِينَ",
+          "qpcV1": "ﯵ",
+          "qpcV2": "ﳄ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:16:3",
+          "word": "ٱشْتَرَوُا۟",
+          "qpcV1": "ﯶ",
+          "qpcV2": "ﳅ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:16:4",
+          "word": "ٱلضَّلَـٰلَةَ",
+          "qpcV1": "ﯷ",
+          "qpcV2": "ﳆ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    },
+    {
+      "line": 15,
+      "type": "text",
+      "text": "بِٱلْهُدَىٰ فَمَا رَبِحَت تِّجَـٰرَتُهُمْ وَمَا كَانُوا۟ مُهْتَدِينَ ١٦",
+      "surah": null,
+      "verseRange": "2:16-2:16",
+      "words": [
+        {
+          "location": "2:16:5",
+          "word": "بِٱلْهُدَىٰ",
+          "qpcV1": "ﯸ",
+          "qpcV2": "ﳇ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:16:6",
+          "word": "فَمَا",
+          "qpcV1": "ﯹ",
+          "qpcV2": "ﳈ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:16:7",
+          "word": "رَبِحَت",
+          "qpcV1": "ﯺ",
+          "qpcV2": "ﳉ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:16:8",
+          "word": "تِّجَـٰرَتُهُمْ",
+          "qpcV1": "ﯻ",
+          "qpcV2": "ﳊ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:16:9",
+          "word": "وَمَا",
+          "qpcV1": "ﯼ",
+          "qpcV2": "ﳋ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:16:10",
+          "word": "كَانُوا۟",
+          "qpcV1": "ﯽ",
+          "qpcV2": "ﳌ",
+          "farsh": null,
+          "highlight": null
+        },
+        {
+          "location": "2:16:11",
+          "word": "مُهْتَدِينَ ١٦",
+          "qpcV1": "ﯾ ﯿ",
+          "qpcV2": "ﳍ ﳎ",
+          "farsh": null,
+          "highlight": null
+        }
+      ]
+    }
+  ]
+}

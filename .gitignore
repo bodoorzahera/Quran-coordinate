@@ -42,8 +42,8 @@ Thumbs.db
 output/debug-*.png
 
 # Large data files (not tracked in git)
-images/
-mushaf/
+#images/
+#mushaf/
 
 # Old output
 output.old/
