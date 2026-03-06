@@ -27,8 +27,8 @@ all = ["fastapi>=0.100.0", "uvicorn>=0.20.0", "numpy", "Pillow", "fonttools"]
 qurancoor = "qurancoor.cli:main"
 
 [project.urls]
-Homepage = "https://github.com/anthropics/qurancoor"
-Repository = "https://github.com/anthropics/qurancoor"
+Homepage = "https://quranwordloc.budoorzahera.cloud"
+Repository = "https://github.com/bodoorzahera/Quran-coordinate/"
 
 [tool.setuptools.packages.find]
 where = ["src"]
