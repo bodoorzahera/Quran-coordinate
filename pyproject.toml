@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "qurancoor"
+version = "1.0.0"
+description = "Pixel-accurate word coordinates for every word in the Quran (Madani mushaf)"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.8"
+keywords = ["quran", "coordinates", "mushaf", "arabic", "word-position"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Topic :: Text Processing",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+]
+
+[project.optional-dependencies]
+serve = ["fastapi>=0.100.0", "uvicorn>=0.20.0"]
+generate = ["numpy", "Pillow", "fonttools"]
+all = ["fastapi>=0.100.0", "uvicorn>=0.20.0", "numpy", "Pillow", "fonttools"]
+
+[project.scripts]
+qurancoor = "qurancoor.cli:main"
+
+[project.urls]
+Homepage = "https://github.com/anthropics/qurancoor"
+Repository = "https://github.com/anthropics/qurancoor"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+qurancoor = ["data/*.json"]

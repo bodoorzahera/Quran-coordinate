@@ -204,10 +204,54 @@ score = gap_width * weight - distance_from_expected * 0.5
 ```
 This ensures cuts always fall in actual whitespace between words, never through a letter.
 
+## Package Installation
+
+### Python (pip)
+```bash
+pip install qurancoor
+```
+
+### JavaScript/TypeScript (npm)
+```bash
+npm install quran-word-coords
+```
+
 ## Integration Patterns
 
-### Pattern 1: Static File Consumption
-Read `output/page-NNN.json` files directly. No server needed.
+### Pattern 1: Python Package (Recommended)
+```python
+from qurancoor import get_page, get_word, find_word_at, get_ayah, scale_coords
+
+# All words on page 7
+coords = get_page(7)
+
+# Specific word
+word = get_word(2, 255, 1)  # Ayat Al-Kursi, word 1
+print(word["h"])  # {"x": ..., "y": ..., "w": ..., "h": ...}
+
+# Hit-test
+location = find_word_at(7, 820, 40)  # => "2:38:1"
+
+# All words in an ayah
+ayah_words = get_ayah(1, 1)
+
+# Scale to display size
+scaled = scale_coords(word["h"], target_width=1800, target_height=2874)
+```
+
+### Pattern 2: npm Package
+```typescript
+import { getPage, getWord, findWordAt, getAyah, scaleBox } from 'quran-word-coords';
+
+const coords = getPage(7);
+const word = getWord(2, 255, 1);
+const location = findWordAt(7, 820, 40); // => "2:38:1"
+const ayah = getAyah(1, 1);
+const scaled = scaleBox(word!.h, 1800, 2874);
+```
+
+### Pattern 3: Static File Consumption (No Package)
+Read `output/page-NNN.json` files directly:
 ```python
 import json
 with open("output/page-007.json") as f:
@@ -217,39 +261,7 @@ for location, coord in data["coords"].items():
     print(f"{location}: x={box['x']}, y={box['y']}, w={box['w']}, h={box['h']}")
 ```
 
-### Pattern 2: Hit-Testing (Which Word Was Clicked?)
-```python
-def find_word_at(coords, click_x, click_y):
-    for location, coord in coords.items():
-        box = coord["h"]
-        if (box["x"] <= click_x <= box["x"] + box["w"] and
-            box["y"] <= click_y <= box["y"] + box["h"]):
-            return location
-    return None
-```
-
-### Pattern 3: Scale Coordinates to Any Display Size
-The coordinates are for 900x1437 images. To scale:
-```python
-def scale_box(box, display_width, display_height):
-    sx = display_width / 900
-    sy = display_height / 1437
-    return {
-        "x": int(box["x"] * sx),
-        "y": int(box["y"] * sy),
-        "w": int(box["w"] * sx),
-        "h": int(box["h"] * sy),
-    }
-```
-
-### Pattern 4: Find All Coordinates for an Ayah
-```python
-def get_ayah_words(coords, sura, ayah):
-    prefix = f"{sura}:{ayah}:"
-    return {k: v for k, v in coords.items() if k.startswith(prefix)}
-```
-
-### Pattern 5: Cross-Page Word Search via API
+### Pattern 4: Cross-Page Word Search via API
 ```python
 import requests
 # 1. Get bare word ID from any page
@@ -266,37 +278,94 @@ for v in variants["variants"]:
         print(f"Page {o['page']}: {o['sura_name']} {o['ayah']}:{o['word_pos']}")
 ```
 
+## Python API Reference
+
+| Function | Signature | Returns |
+|----------|-----------|---------|
+| `get_page` | `get_page(page: int)` | `dict` — all word coords on page |
+| `get_word` | `get_word(sura, ayah, word, page=None)` | `dict` or `None` — single word coords |
+| `find_word_at` | `find_word_at(page, x, y)` | `str` or `None` — location key |
+| `get_ayah` | `get_ayah(sura, ayah, page=None)` | `dict` — all words in ayah |
+| `word_count` | `word_count(page)` | `int` |
+| `all_locations` | `all_locations(page)` | `list[str]` — sorted keys |
+| `scale_coords` | `scale_coords(box, w, h)` | `dict` — scaled box |
+| `get_sura_pages` | `get_sura_pages(sura)` | `list[int]` — pages containing sura |
+| `clear_cache` | `clear_cache()` | Frees cached data |
+
+## npm API Reference
+
+| Function | Signature | Returns |
+|----------|-----------|---------|
+| `getPage` | `getPage(page: number)` | `PageCoords` |
+| `getWord` | `getWord(sura, ayah, word, page?)` | `WordCoords \| null` |
+| `findWordAt` | `findWordAt(page, x, y)` | `string \| null` |
+| `getAyah` | `getAyah(sura, ayah, page?)` | `PageCoords` |
+| `wordCount` | `wordCount(page)` | `number` |
+| `allLocations` | `allLocations(page)` | `string[]` |
+| `scaleBox` | `scaleBox(box, w, h)` | `Box` |
+| `parseLocation` | `parseLocation(loc)` | `{sura, ayah, word}` |
+| `clearCache` | `clearCache()` | `void` |
+
+## TypeScript Types
+
+```typescript
+interface Box { x: number; y: number; w: number; h: number; }
+interface WordCoords { h: Box; p?: Box; o?: Box; }
+type PageCoords = Record<string, WordCoords>;
+interface WordLocation { sura: number; ayah: number; word: number; }
+```
+
+## Package Structure
+
+All tools are part of the `qurancoor` Python package:
+
+```
+pip install qurancoor           # Data API only
+pip install qurancoor[serve]    # + web viewer
+pip install qurancoor[generate] # + coord generation
+pip install qurancoor[all]      # everything
+```
+
+Modules:
+- `qurancoor` — Data API (get_page, get_word, find_word_at, etc.)
+- `qurancoor.server` — FastAPI web viewer/editor
+- `qurancoor.generate` — Coordinate extraction pipeline
+- `qurancoor.build_freq` — Word frequency database builder
+- `qurancoor.cli` — CLI entry point
+
 ## File Dependencies
 
 ```
-generate_coords.py
+qurancoor.generate (qurancoor generate)
   READS:  images/page-NNN.png, quran.com-images/res/fonts/QCF_PNNN.TTF, quran_glyphs.db, mushaf/page-NNN.json
   WRITES: output/page-NNN.json
 
-build_word_freq.py
+qurancoor.build_freq (qurancoor build-freq)
   READS:  mushaf/page-NNN.json
   WRITES: word_freq.db
 
-server.py
-  READS:  output/page-NNN.json, images/page-NNN.png, mushaf/page-NNN.json, word_freq.db
+qurancoor.server (qurancoor serve)
+  READS:  bundled data/*.json, images/page-NNN.png, mushaf/page-NNN.json, word_freq.db
   SERVES: Web UI + REST API
 ```
 
 ## Rebuilding Everything from Scratch
 
 ```bash
+pip install qurancoor[all]
+
 # 1. Clone quran.com-images (if not present)
 git submodule update --init
 
 # 2. Build glyph database
-python3 generate_coords.py --build-db -q quran.com-images
+qurancoor generate --build-db -q quran.com-images
 
 # 3. Generate all coordinates
-python3 generate_coords.py -b . -q quran.com-images -o output --all
+qurancoor generate -b . -q quran.com-images -o output --all
 
 # 4. Build word frequency database
-python3 build_word_freq.py --mushaf-dir ./mushaf --db word_freq.db
+qurancoor build-freq --mushaf-dir ./mushaf --db word_freq.db
 
 # 5. Launch viewer
-python3 server.py --port 8003
+qurancoor serve --images-dir ./images --port 8003
 ```

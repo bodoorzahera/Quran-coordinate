@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.egg-info/
+dist/
+build/
+*.whl
+*.egg
 
 # Virtual Environment
 venv/
@@ -36,9 +41,13 @@ Thumbs.db
 # Generated debug images
 output/debug-*.png
 
-# Large image files (not tracked in git)
+# Large data files (not tracked in git)
 images/
 mushaf/
 
-# Output old
+# Old output
 output.old/
+
+# npm build artifacts
+npm/node_modules/
+npm/dist/

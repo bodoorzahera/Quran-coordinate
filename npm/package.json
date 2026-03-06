@@ -1,0 +1,36 @@
+{
+  "name": "quran-word-coords",
+  "version": "1.0.0",
+  "description": "Pixel-accurate word coordinates for every word in the Quran (Madani mushaf)",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "data"
+  ],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "quran",
+    "coordinates",
+    "mushaf",
+    "arabic",
+    "word-position",
+    "quran-api"
+  ],
+  "license": "MIT",
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.3.0"
+  }
+}
