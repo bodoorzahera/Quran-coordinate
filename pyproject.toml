@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qurancoor"
-version = "1.0.0"
+version = "1.1.1"
 description = "Pixel-accurate word coordinates for every word in the Quran (Madani mushaf)"
 readme = "README.md"
 license = {text = "MIT"}
