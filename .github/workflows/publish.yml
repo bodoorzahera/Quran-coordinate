@@ -1,4 +1,4 @@
-name: Build and Publish to PyPI
+name: Build and Publish
 
 on:
   push:
@@ -7,7 +7,7 @@ on:
       - main
 
 jobs:
-  publish:
+  publish-pypi:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -31,3 +31,31 @@ jobs:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: twine upload dist/*
+
+  publish-npm:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Install dependencies
+        working-directory: npm
+        run: npm ci
+
+      - name: Build
+        working-directory: npm
+        run: npm run build
+
+      - name: Publish to npm
+        working-directory: npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: npm publish --access public
