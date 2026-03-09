@@ -1,5 +1,4 @@
-import { readFileSync } from "fs";
-import { join } from "path";
+import rawData from "../../data/coords.json";
 
 /**
  * Bounding box in pixels relative to page image (900x1437).
@@ -44,13 +43,10 @@ export interface WordLocation {
 
 // Internal cache
 const cache: Map<number, PageCoords> = new Map();
-let allData: Record<string, PageCoords> | null = null;
+const allData = rawData as unknown as Record<string, PageCoords>;
 
 function loadAllData(): Record<string, PageCoords> {
-  if (allData) return allData;
-  const dataPath = join(__dirname, "..", "data", "coords.json");
-  allData = JSON.parse(readFileSync(dataPath, "utf-8"));
-  return allData!;
+  return allData;
 }
 
 /**
@@ -229,5 +225,4 @@ export function scaleBox(
  */
 export function clearCache(): void {
   cache.clear();
-  allData = null;
 }
