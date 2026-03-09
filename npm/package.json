@@ -1,6 +1,6 @@
 {
   "name": "quran-word-coords",
-  "version": "1.0.0",
+  "version": "1.2.3",
   "description": "Pixel-accurate word coordinates for every word in the Quran (Madani mushaf)",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
