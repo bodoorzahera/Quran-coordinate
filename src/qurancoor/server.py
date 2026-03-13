@@ -11,7 +11,7 @@ def _lazy_imports():
     return FastAPI,HTTPException,Request,HTMLResponse,FileResponse,uvicorn
 
 app = None
-CFG={"img":"./images","js":_PKG_DATA,"mu":"./mushaf","wf":"./word_freq.db"}
+CFG={"img":"./images","js":_PKG_DATA,"mu":"./mushaf","wf":"./word_freq.db","ver":"./app_version.json"}
 
 def _ensure_app():
     global app
@@ -131,6 +131,142 @@ def _ensure_app():
         occs=[{"page":r[0],"sura":r[1],"ayah":r[2],"word_pos":r[3],"location":r[4],"sura_name":r[5]} for r in c.fetchall()]
         conn.close()
         return{"vocalized":vocalized,"voc_id":voc_id,"occurrences":occs}
+
+    _mutashabihat_cache = {}
+
+    import re as _re
+    _ARABIC_NUMS = _re.compile(r'[\u0660-\u0669\u06F0-\u06F9\s]+$')
+
+    def _clean_word(w):
+        return _ARABIC_NUMS.sub('', w).strip()
+
+    def _load_all_ayahs():
+        """Load all mushaf pages and return list of ayah dicts sorted by location."""
+        mu_dir = CFG["mu"]
+        # Map (sura, ayah) -> {words: [...], page: int}
+        ayah_map = {}
+        for page_num in range(1, 605):
+            p = os.path.join(mu_dir, f"page-{page_num:03d}.json")
+            if not os.path.exists(p):
+                continue
+            with open(p, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            for line in data.get("lines", []):
+                if line.get("type") != "text":
+                    continue
+                for word in line.get("words", []):
+                    loc = word.get("location", "")
+                    raw = word.get("word", "")
+                    if not loc:
+                        continue
+                    parts = loc.split(":")
+                    if len(parts) < 3:
+                        continue
+                    try:
+                        sura = int(parts[0])
+                        ayah = int(parts[1])
+                        wpos = int(parts[2])
+                    except ValueError:
+                        continue
+                    key = (sura, ayah)
+                    if key not in ayah_map:
+                        ayah_map[key] = {"sura": sura, "ayah": ayah, "page": page_num, "words": []}
+                    ayah_map[key]["words"].append((wpos, _clean_word(raw)))
+        # Sort words within each ayah and build final list
+        ayahs = []
+        for key in sorted(ayah_map.keys()):
+            entry = ayah_map[key]
+            entry["words"].sort(key=lambda x: x[0])
+            entry["clean_words"] = [w for _, w in entry["words"]]
+            ayahs.append(entry)
+        return ayahs
+
+    def _get_sura_names():
+        conn = get_wf_conn()
+        if not conn:
+            return {}
+        try:
+            c = conn.cursor()
+            c.execute("SELECT sura, name FROM sura_names")
+            names = {row[0]: row[1] for row in c.fetchall()}
+            conn.close()
+            return names
+        except Exception:
+            conn.close()
+            return {}
+
+    @app.get("/api/version")
+    async def version():
+        p=CFG["ver"]
+        if not os.path.exists(p):
+            return{"version":"1.0.0","release_date":"","download_url":"","changelog":[]}
+        with open(p,"r",encoding="utf-8")as f:return json.load(f)
+
+    @app.get("/api/mutashabihat/{n}")
+    async def mutashabihat(n: int):
+        if n < 1 or n > 20:
+            from fastapi import HTTPException as _HE
+            raise _HE(400, detail="n must be between 1 and 20")
+        if n in _mutashabihat_cache:
+            return _mutashabihat_cache[n]
+
+        ayahs = _load_all_ayahs()
+        sura_names = _get_sura_names()
+
+        # Build index: prefix tuple -> list of ayah indices
+        from collections import defaultdict as _dd
+        groups_map = _dd(list)
+        for idx, ayah in enumerate(ayahs):
+            words = ayah["clean_words"]
+            if len(words) < n:
+                continue
+            key = tuple(words[:n])
+            groups_map[key].append(idx)
+
+        # Filter groups with 2+ ayahs
+        result_groups = []
+        for key, indices in groups_map.items():
+            if len(indices) < 2:
+                continue
+            group_ayahs = []
+            for idx in indices:
+                ayah = ayahs[idx]
+                sura = ayah["sura"]
+                ayah_num = ayah["ayah"]
+                text = " ".join(ayah["clean_words"])
+                # Previous ayah context: last 5 words of previous ayah
+                prev_text = ""
+                if idx > 0:
+                    prev = ayahs[idx - 1]
+                    if prev["sura"] == sura:
+                        prev_text = " ".join(prev["clean_words"][-5:])
+                # Next ayah context: first 5 words of next ayah
+                next_text = ""
+                if idx < len(ayahs) - 1:
+                    nxt = ayahs[idx + 1]
+                    if nxt["sura"] == sura:
+                        next_text = " ".join(nxt["clean_words"][:5])
+                group_ayahs.append({
+                    "sura": sura,
+                    "ayah": ayah_num,
+                    "text": text,
+                    "prev_text": prev_text,
+                    "next_text": next_text,
+                    "page": ayah["page"],
+                    "sura_name": sura_names.get(sura, ""),
+                })
+            result_groups.append({
+                "prefix": " ".join(key),
+                "count": len(indices),
+                "ayahs": group_ayahs,
+            })
+
+        # Sort by count descending then by prefix
+        result_groups.sort(key=lambda g: (-g["count"], g["prefix"]))
+
+        result = {"n": n, "total_groups": len(result_groups), "groups": result_groups}
+        _mutashabihat_cache[n] = result
+        return result
 
     return app
 
@@ -293,7 +429,10 @@ body{font-family:'Tajawal',sans-serif;background:var(--vpbg);color:var(--tx)}
   <span class="lbl">Badge</span>
   <button class="btn" onclick="badgeZoom(-1)" style="padding:3px 8px">-</button>
   <button class="btn" onclick="badgeZoom(1)" style="padding:3px 8px">+</button>
- </div>
+ </div><div class="sep"></div>
+ <a href="/download/" target="_blank" class="btn" style="background:linear-gradient(135deg,#16a34a,#15803d);color:#fff;text-decoration:none;display:flex;align-items:center;gap:6px;font-weight:700;border:none;box-shadow:0 0 10px rgba(22,163,74,.4)">
+  <span style="font-size:18px">&#11015;</span> تطبيق Android
+ </a>
 </div>
 <div id="vp">
  <div class="cw" id="cw">

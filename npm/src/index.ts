@@ -1,4 +1,4 @@
-import rawData from "../../data/coords.json";
+import rawData from "../data/coords.json";
 
 /**
  * Bounding box in pixels relative to page image (900x1437).
