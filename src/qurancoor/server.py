@@ -51,6 +51,25 @@ def _ensure_app():
     @app.get("/",response_class=HTMLResponse)
     async def index():return HTML
 
+    def _doc_path(name):
+        # docs live at the repo root; resolve relative to cwd then package root
+        for base in (os.getcwd(),os.path.dirname(os.path.dirname(os.path.dirname(__file__)))):
+            p=os.path.join(base,name)
+            if os.path.exists(p):return p
+        return None
+
+    @app.get("/deploy.html",response_class=HTMLResponse)
+    async def deploy_doc():
+        p=_doc_path("deploy.html")
+        if not p:raise HTTPException(404)
+        return FileResponse(p,media_type="text/html")
+
+    @app.get("/Features.html",response_class=HTMLResponse)
+    async def features_doc():
+        p=_doc_path("Features.html")
+        if not p:raise HTTPException(404)
+        return FileResponse(p,media_type="text/html")
+
     @app.get("/manifest.json")
     async def manifest():
         m={
