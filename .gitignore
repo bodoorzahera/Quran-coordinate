@@ -25,9 +25,11 @@ env/
 .DS_Store
 Thumbs.db
 
-# Databases (generated, large)
+# Databases (generated, large) — but ship the two the running system needs
 *.db
 *.db-journal
+!quran_glyphs.db
+!word_freq.db
 
 # Temporary / Backup files
 *.tmp

@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>المميزات — Quran Word Coordinates</title>
+<style>
+  :root{
+    --bg:#0a0f0d; --panel:#10302480; --card:#12241c; --line:#1e3a2c;
+    --txt:#eaf3ee; --muted:#9fb8ac; --accent:#27c79a; --accent2:#5fe0b8; --gold:#f0c040;
+    --link:#5fe0b8;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%, #15402f 0%, var(--bg) 55%);
+    color:var(--txt); font-family:"Segoe UI",Tahoma,system-ui,sans-serif; line-height:1.8;
+  }
+  body[dir="ltr"]{font-family:system-ui,"Segoe UI",sans-serif}
+  .toggle{position:fixed;top:14px;inset-inline-end:14px;z-index:50}
+  .toggle button{background:#10302480;color:var(--txt);border:1px solid var(--line);padding:8px 14px;border-radius:999px;cursor:pointer;backdrop-filter:blur(6px)}
+  .wrap{max-width:1000px;margin:0 auto;padding:0 20px 80px}
+  /* HERO */
+  .hero{text-align:center;padding:90px 20px 50px}
+  .hero .kicker{color:var(--accent2);letter-spacing:2px;font-size:.85rem;text-transform:uppercase}
+  .hero h1{font-size:2.8rem;margin:14px 0 10px;background:linear-gradient(90deg,#5fe0b8,#27c79a,#f0c040);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .hero p.sub{font-size:1.25rem;color:var(--txt);margin:0 auto;max-width:680px}
+  .stats{display:flex;justify-content:center;gap:36px;flex-wrap:wrap;margin:34px 0}
+  .stat .n{font-size:2rem;font-weight:800;color:var(--gold)}
+  .stat .l{color:var(--muted);font-size:.9rem}
+  .cta{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:26px}
+  .cta a{padding:13px 26px;border-radius:12px;text-decoration:none;font-weight:700;transition:transform .15s}
+  .cta a:hover{transform:translateY(-2px)}
+  .cta .primary{background:linear-gradient(90deg,#27c79a,#1f9d76);color:#04140e}
+  .cta .ghost{border:1px solid var(--line);color:var(--txt)}
+  /* SECTIONS */
+  h2{font-size:1.8rem;text-align:center;margin:60px 0 6px}
+  .lead{text-align:center;color:var(--muted);margin:0 auto 30px;max-width:640px}
+  .grid{display:grid;gap:18px;grid-template-columns:repeat(auto-fit,minmax(250px,1fr))}
+  .feature{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px;transition:border-color .2s,transform .15s}
+  .feature:hover{border-color:var(--accent);transform:translateY(-3px)}
+  .feature .ic{font-size:1.9rem}
+  .feature h3{margin:10px 0 6px;font-size:1.12rem;color:var(--accent2)}
+  .feature p{margin:0;color:var(--muted);font-size:.95rem}
+  .why{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:26px;margin-top:24px}
+  .why li{margin:10px 0}
+  .roadmap .feature{border-style:dashed}
+  .tag{display:inline-block;font-size:.72rem;padding:2px 9px;border-radius:999px;margin-inline-start:8px}
+  .tag.soon{background:#3a2f08;color:var(--gold)}
+  .tag.gap{background:#3a1418;color:#ff9b9b}
+  a{color:var(--link)}
+  .en{display:none}
+  body[dir="ltr"] .ar{display:none}
+  body[dir="ltr"] .en{display:block}
+  body[dir="ltr"] span.en,body[dir="ltr"] a.en{display:inline}
+  body[dir="ltr"] li.en{display:list-item}
+  footer{text-align:center;color:var(--muted);padding:40px 20px;border-top:1px solid var(--line);margin-top:50px}
+</style>
+</head>
+<body dir="rtl">
+
+<div class="toggle"><button onclick="toggleLang()" id="langBtn">English</button></div>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="kicker">OPEN SOURCE · MIT</div>
+    <h1>Quran Word Coordinates</h1>
+    <p class="sub ar">إحداثيات دقيقة بالبكسل لكل كلمة في المصحف المدني — منصّة متكاملة للمطوّرين وتطبيقات القرآن الكريم.</p>
+    <p class="sub en">Pixel-accurate coordinates for every word in the Madani mushaf — a complete platform for developers and Quran apps.</p>
+    <div class="stats">
+      <div class="stat"><div class="n">77,320</div><div class="l"><span class="ar">كلمة</span><span class="en">words</span></div></div>
+      <div class="stat"><div class="n">604</div><div class="l"><span class="ar">صفحة</span><span class="en">pages</span></div></div>
+      <div class="stat"><div class="n">114</div><div class="l"><span class="ar">سورة</span><span class="en">suras</span></div></div>
+      <div class="stat"><div class="n">2</div><div class="l"><span class="ar">واجهتا برمجة (Py + JS)</span><span class="en">APIs (Py + JS)</span></div></div>
+    </div>
+    <div class="cta">
+      <a class="primary" href="https://github.com/bodoorzahera/Quran-coordinate"><span class="ar">⭐ على GitHub</span><span class="en">⭐ Star on GitHub</span></a>
+      <a class="ghost" href="deploy.html"><span class="ar">🚀 دليل النشر</span><span class="en">🚀 Deploy Guide</span></a>
+      <a class="ghost" href="downloads/quran-word-app.apk"><span class="ar">📱 تطبيق أندرويد</span><span class="en">📱 Android APK</span></a>
+    </div>
+  </section>
+
+  <!-- CURRENT FEATURES -->
+  <h2><span class="ar">المميزات الحالية</span><span class="en">Current Features</span></h2>
+  <p class="lead"><span class="ar">كل ما يقدّمه النظام اليوم — جاهز للاستخدام والإنتاج.</span><span class="en">Everything the system offers today — production-ready.</span></p>
+  <div class="grid">
+    <div class="feature"><div class="ic">🎯</div><h3><span class="ar">إحداثيات دقيقة بالبكسل</span><span class="en">Pixel-Accurate Coordinates</span></h3><p><span class="ar">صندوق إحاطة دقيق لكل كلمة عبر خوارزمية محاذاة من 5 مراحل تعتمد على الخطوط والصور.</span><span class="en">A precise bounding box per word via a 5-stage font+image alignment pipeline.</span></p></div>
+    <div class="feature"><div class="ic">✨</div><h3><span class="ar">تظليل كلمة بكلمة</span><span class="en">Word-by-Word Highlight</span></h3><p><span class="ar">اربط توقيت التلاوة الصوتية بمواضع الكلمات لتظليلها أثناء القراءة.</span><span class="en">Map audio timing to word boxes to highlight during recitation.</span></p></div>
+    <div class="feature"><div class="ic">👆</div><h3><span class="ar">النقر لإظهار التفسير</span><span class="en">Tap-to-Tafsir</span></h3><p><span class="ar">اختبار إصابة (hit-test) للمس المستخدم لمعرفة الكلمة المضغوطة على الصورة.</span><span class="en">Hit-test user taps to know which word was pressed on the image.</span></p></div>
+    <div class="feature"><div class="ic">📊</div><h3><span class="ar">مستكشف تكرار الكلمات</span><span class="en">Word-Frequency Explorer</span></h3><p><span class="ar">عدّ تكرار كل كلمة، وكل صيغها بالتشكيل، وكل مواضعها في المصحف.</span><span class="en">Count each word, its tashkeel variants, and all its locations.</span></p></div>
+    <div class="feature"><div class="ic">🧠</div><h3><span class="ar">اختبار الحفظ الذاتي</span><span class="en">Memorization Self-Quiz</span></h3><p><span class="ar">اختبر حفظك بثلاث مستويات صعوبة عبر آيات عشوائية.</span><span class="en">Test your memorization with three difficulty levels via random ayahs.</span></p></div>
+    <div class="feature"><div class="ic">🔗</div><h3><span class="ar">المتشابهات</span><span class="en">Mutashabihat</span></h3><p><span class="ar">اعثر على الآيات المتشابهة في مطلعها بعدد كلمات يحدّده المستخدم.</span><span class="en">Find ayahs with similar openings by a chosen number of matching words.</span></p></div>
+    <div class="feature"><div class="ic">🔤</div><h3><span class="ar">إحصاء الحروف</span><span class="en">Letter Statistics</span></h3><p><span class="ar">إحصائيات تكرار الحروف العربية عبر المصحف كاملًا.</span><span class="en">Arabic letter frequency statistics across the whole mushaf.</span></p></div>
+    <div class="feature"><div class="ic">📿</div><h3><span class="ar">أسماء الله الحسنى</span><span class="en">Names of Allah</span></h3><p><span class="ar">٩٩ اسمًا مع المعاني والمواضع والمراجع القرآنية.</span><span class="en">99 names with meanings, occurrences, and Quranic references.</span></p></div>
+    <div class="feature"><div class="ic">🔖</div><h3><span class="ar">العلامات المرجعية</span><span class="en">Bookmarks</span></h3><p><span class="ar">احفظ مواضع القراءة وارجع إليها بسهولة.</span><span class="en">Save reading positions and return to them easily.</span></p></div>
+    <div class="feature"><div class="ic">📡</div><h3><span class="ar">الإعلانات والإشعارات</span><span class="en">Announcements</span></h3><p><span class="ar">إعلانات من الخادم محدودة بزمن صلاحية.</span><span class="en">Time-bounded server-driven announcements.</span></p></div>
+    <div class="feature"><div class="ic">📲</div><h3><span class="ar">يعمل دون اتصال (PWA)</span><span class="en">Offline-First (PWA)</span></h3><p><span class="ar">تطبيق ويب تقدمي قابل للتثبيت مع تخزين مؤقت للصور والبيانات.</span><span class="en">Installable PWA with image &amp; data caching.</span></p></div>
+    <div class="feature"><div class="ic">⚙️</div><h3><span class="ar">واجهتا برمجة: Python + JS</span><span class="en">Dual APIs: Python + JS</span></h3><p><span class="ar">نفس البيانات عبر <code>pip install qurancoor</code> و<code>npm i quran-word-coords</code>.</span><span class="en">Same data via <code>pip install qurancoor</code> and <code>npm i quran-word-coords</code>.</span></p></div>
+  </div>
+
+  <!-- WHY USE -->
+  <h2><span class="ar">لماذا تستخدمه؟</span><span class="en">Why Use It?</span></h2>
+  <div class="why">
+    <ul>
+      <li><span class="ar"><strong>دقة موثوقة:</strong> خوارزمية محاذاة تجمع بين مقاييس الخطوط وكشف الفراغات في الصور.</span><span class="en"><strong>Trusted accuracy:</strong> an alignment algorithm combining font metrics and image gap detection.</span></li>
+      <li><span class="ar"><strong>بيانات مفتوحة:</strong> كل الإحداثيات وقواعد البيانات مرفقة — لا قيود ولا خوادم خفية.</span><span class="en"><strong>Open data:</strong> all coordinates and databases bundled — no lock-in, no hidden servers.</span></li>
+      <li><span class="ar"><strong>متعدد المنصات:</strong> Python وJavaScript وويب (PWA) وأندرويد.</span><span class="en"><strong>Cross-platform:</strong> Python, JavaScript, web (PWA), and Android.</span></li>
+      <li><span class="ar"><strong>يعمل دون اتصال:</strong> الواجهة قابلة للتثبيت وتعمل بلا إنترنت.</span><span class="en"><strong>Offline-first:</strong> installable UI that works without internet.</span></li>
+      <li><span class="ar"><strong>سهل النشر مجانًا:</strong> استنسخ وشغّل، وانشر على استضافة مجانية بدون بطاقة — انظر <a href="deploy.html">دليل النشر</a>.</span><span class="en"><strong>Free to deploy:</strong> clone, run, host free without a card — see the <a href="deploy.html">deploy guide</a>.</span></li>
+      <li><span class="ar"><strong>مفتوح المصدر (MIT):</strong> استخدمه وعدّله وساهم فيه بحرية.</span><span class="en"><strong>Open source (MIT):</strong> use, modify, and contribute freely.</span></li>
+    </ul>
+  </div>
+
+  <!-- COMPETITOR GAPS -->
+  <h2><span class="ar">مميزات في التطبيقات المنافسة وغير موجودة هنا (بعد)</span><span class="en">Competitor Features Not Here (Yet)</span></h2>
+  <p class="lead"><span class="ar">بصراحة وشفافية — هذه فرص تطوير نرحّب بالمساهمة فيها.</span><span class="en">Transparently — these are open opportunities we welcome contributions for.</span></p>
+  <div class="grid">
+    <div class="feature"><div class="ic">🎙️</div><h3><span class="ar">مزامنة التلاوة الصوتية<span class="tag gap">ناقص</span></span><span class="en">Audio Recitation Sync<span class="tag gap">gap</span></span></h3><p><span class="ar">تشغيل صوت قرّاء متعدّدين مع تظليل متزامن للكلمات.</span><span class="en">Multiple reciters with synchronized word highlighting.</span></p></div>
+    <div class="feature"><div class="ic">🌈</div><h3><span class="ar">تلوين التجويد<span class="tag gap">ناقص</span></span><span class="en">Tajweed Coloring<span class="tag gap">gap</span></span></h3><p><span class="ar">تلوين الكلمات وفق أحكام التجويد في مواضعها الدقيقة.</span><span class="en">Color-code words by tajweed rules at exact positions.</span></p></div>
+    <div class="feature"><div class="ic">🌍</div><h3><span class="ar">تفاسير وترجمات متعددة<span class="tag gap">ناقص</span></span><span class="en">Multiple Tafsir/Translations<span class="tag gap">gap</span></span></h3><p><span class="ar">طبقات تفسير وترجمة بلغات متعددة.</span><span class="en">Layered tafsir and translations in many languages.</span></p></div>
+    <div class="feature"><div class="ic">🔍</div><h3><span class="ar">بحث نصي وبالجذور<span class="tag gap">ناقص</span></span><span class="en">Full-Text &amp; Root Search<span class="tag gap">gap</span></span></h3><p><span class="ar">بحث شامل في النص وبجذور الكلمات.</span><span class="en">Search across text and by word roots.</span></p></div>
+    <div class="feature"><div class="ic">📖</div><h3><span class="ar">القراءات (روايات)<span class="tag gap">ناقص</span></span><span class="en">Qira'at Variants<span class="tag gap">gap</span></span></h3><p><span class="ar">عرض اختلافات القراءات وروايات النص.</span><span class="en">Render variant readings of the text.</span></p></div>
+    <div class="feature"><div class="ic">☁️</div><h3><span class="ar">حسابات ومزامنة سحابية<span class="tag gap">ناقص</span></span><span class="en">Accounts &amp; Cloud Sync<span class="tag gap">gap</span></span></h3><p><span class="ar">مزامنة العلامات والتقدّم عبر الأجهزة.</span><span class="en">Sync bookmarks &amp; progress across devices.</span></p></div>
+  </div>
+
+  <!-- ROADMAP -->
+  <h2><span class="ar">خارطة الطريق المستقبلية المقترحة</span><span class="en">Proposed Future Roadmap</span></h2>
+  <p class="lead"><span class="ar">إلى أين نتجه — وأنت مدعوّ للمساهمة.</span><span class="en">Where we're heading — and you're invited to build it.</span></p>
+  <div class="grid roadmap">
+    <div class="feature"><div class="ic">⏱️</div><h3><span class="ar">محاذاة التوقيت الصوتي<span class="tag soon">قريبًا</span></span><span class="en">Audio Timestamp Alignment<span class="tag soon">planned</span></span></h3><p><span class="ar">بيانات توقيت لكل كلمة لمزامنة التلاوة آليًا.</span><span class="en">Per-word timestamp data for automatic recitation sync.</span></p></div>
+    <div class="feature"><div class="ic">🎨</div><h3><span class="ar">محرّك طبقة التجويد<span class="tag soon">قريبًا</span></span><span class="en">Tajweed Overlay Engine<span class="tag soon">planned</span></span></h3><p><span class="ar">طبقة ألوان أحكام التجويد فوق الإحداثيات الحالية.</span><span class="en">A tajweed color layer on top of existing coordinates.</span></p></div>
+    <div class="feature"><div class="ic">🗣️</div><h3><span class="ar">ترجمات متعددة اللغات<span class="tag soon">قريبًا</span></span><span class="en">Multi-Language Translations<span class="tag soon">planned</span></span></h3><p><span class="ar">طبقات ترجمة قابلة للإضافة لكل آية.</span><span class="en">Pluggable per-ayah translation layers.</span></p></div>
+    <div class="feature"><div class="ic">🔎</div><h3><span class="ar">واجهة بحث REST<span class="tag soon">قريبًا</span></span><span class="en">REST Search API<span class="tag soon">planned</span></span></h3><p><span class="ar">بحث نصي/جذري عبر نقطة نهاية مخصّصة.</span><span class="en">Text/root search via a dedicated endpoint.</span></p></div>
+    <div class="feature"><div class="ic">🔄</div><h3><span class="ar">مزامنة الحسابات<span class="tag soon">قريبًا</span></span><span class="en">Account Sync<span class="tag soon">planned</span></span></h3><p><span class="ar">تخزين سحابي للعلامات والتقدّم.</span><span class="en">Cloud storage for bookmarks &amp; progress.</span></p></div>
+    <div class="feature"><div class="ic">🍎</div><h3><span class="ar">تطبيق iOS<span class="tag soon">قريبًا</span></span><span class="en">iOS App<span class="tag soon">planned</span></span></h3><p><span class="ar">إصدار iOS بجانب نسخة أندرويد الحالية.</span><span class="en">An iOS build alongside the current Android app.</span></p></div>
+  </div>
+
+  <section class="hero" style="padding-top:60px">
+    <h2 style="margin-top:0"><span class="ar">ابدأ الآن</span><span class="en">Get Started</span></h2>
+    <div class="cta">
+      <a class="primary" href="deploy.html"><span class="ar">🚀 انشر نظامك</span><span class="en">🚀 Deploy Yours</span></a>
+      <a class="ghost" href="https://github.com/bodoorzahera/Quran-coordinate"><span class="ar">💻 شاهد الكود</span><span class="en">💻 View Source</span></a>
+      <a class="ghost" href="CONTRIBUTING.md"><span class="ar">🤝 ساهم معنا</span><span class="en">🤝 Contribute</span></a>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <span class="ar">مفتوح المصدر برخصة MIT · صُنع لخدمة كتاب الله</span>
+  <span class="en">Open source under the MIT License · Built to serve the Book of Allah</span>
+</footer>
+
+<script>
+function toggleLang(){
+  var b=document.body, btn=document.getElementById('langBtn');
+  if(b.getAttribute('dir')==='rtl'){
+    b.setAttribute('dir','ltr'); btn.textContent='العربية';
+  } else {
+    b.setAttribute('dir','rtl'); btn.textContent='English';
+  }
+}
+</script>
+</body>
+</html>

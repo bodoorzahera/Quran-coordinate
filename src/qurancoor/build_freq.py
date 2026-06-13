@@ -21,7 +21,7 @@ import json, os, sys, re, sqlite3, argparse, glob, unicodedata
 
 def strip_trailing_digits(word):
     """Remove trailing digits (Western, Arabic-Indic, Extended Arabic-Indic) from word."""
-    return re.sub(r'[\d\u0660-\u0669\u06F0-\u06F9]+$', '', word)
+    return re.sub(r'[\s\d\u0660-\u0669\u06F0-\u06F9]+$', '', word)
 
 
 def strip_tashkeel(word):

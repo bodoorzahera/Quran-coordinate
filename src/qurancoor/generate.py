@@ -111,7 +111,8 @@ def get_font_advances(font_path):
 
 # ─── Image Analysis ──────────────────────────────────────────────────────────
 
-def detect_line_bands(gray, expected):
+def _detect_all_bands(gray, min_height=15):
+    """Detect all horizontal ink bands in the image."""
     h_proj = np.sum(gray < INK_THRESH, axis=1)
     thr = max(3, np.max(h_proj) * 0.05)
     in_t = False; bands = []; s = 0
@@ -119,9 +120,74 @@ def detect_line_bands(gray, expected):
         if h_proj[y] >= thr:
             if not in_t: s = y; in_t = True
         else:
-            if in_t and y - s > 15: bands.append((s, y)); in_t = False
-    if in_t and len(h_proj) - s > 15: bands.append((s, len(h_proj)))
-    return bands if len(bands) == expected else None
+            if in_t and y - s > min_height: bands.append((s, y)); in_t = False
+    if in_t and len(h_proj) - s > min_height: bands.append((s, len(h_proj)))
+    return bands
+
+
+def detect_line_bands(gray, expected, mushaf_line_types=None):
+    all_bands = _detect_all_bands(gray)
+    if len(all_bands) == expected:
+        return all_bands
+
+    # Filter noise bands (too short to be real text/content lines)
+    clean = [b for b in all_bands if b[1] - b[0] > 30]
+    if len(clean) == expected:
+        return clean
+
+    if not mushaf_line_types:
+        return None
+
+    total_lines = len(mushaf_line_types)
+
+    # If clean band count matches total mushaf lines, pick only text-line bands.
+    if len(clean) == total_lines:
+        text_bands = [clean[i] for i, t in enumerate(mushaf_line_types) if t == 'text']
+        if len(text_bands) == expected:
+            return text_bands
+
+    # Handle merged bands: if we're short by N bands, try splitting the tallest
+    # bands (surah-header + basmala often merge into one tall band).
+    if len(clean) < total_lines:
+        deficit = total_lines - len(clean)
+        heights = sorted(b[1] - b[0] for b in clean)
+        median_h = heights[len(heights) // 2]
+
+        expanded = []
+        for s, e in clean:
+            h = e - s
+            if deficit > 0 and h > median_h * 1.8:
+                # Split at the row with minimum ink density
+                h_proj = np.sum(gray[s:e, TEXT_LEFT:TEXT_RIGHT] < INK_THRESH, axis=1)
+                # Find valleys (local minima regions) to split on
+                splits = [s]
+                # Need deficit+1 segments from this band, so find deficit split points
+                for _ in range(min(deficit, h // 30)):
+                    # Find the minimum ink row that's not too close to existing splits
+                    best_y = None; best_val = float('inf')
+                    for y in range(20, len(h_proj) - 20):
+                        abs_y = s + y
+                        if any(abs(abs_y - sp) < 25 for sp in splits[1:]):
+                            continue
+                        if h_proj[y] < best_val:
+                            best_val = h_proj[y]; best_y = abs_y
+                    if best_y is not None:
+                        splits.append(best_y)
+                        deficit -= 1
+                splits.append(e)
+                splits.sort()
+                for i in range(len(splits) - 1):
+                    if splits[i+1] - splits[i] > 10:
+                        expanded.append((splits[i], splits[i+1]))
+            else:
+                expanded.append((s, e))
+
+        if len(expanded) == total_lines:
+            text_bands = [expanded[i] for i, t in enumerate(mushaf_line_types) if t == 'text']
+            if len(text_bands) == expected:
+                return text_bands
+
+    return None
 
 
 def find_ink_extent(gray, y1, y2):
@@ -262,6 +328,26 @@ def process_page(page_num, base_dir, quran_images_dir, db_path, output_dir, mush
 
     total_db_lines = len(db_lines)
 
+    # ═══════════════════════════════════════════════════════════════
+    # Load mushaf JSON — THIS is the source of truth for locations
+    # ═══════════════════════════════════════════════════════════════
+    mushaf_lines = []  # list of lists of {location, word}
+    mushaf_line_types = []  # all line types in order
+    mushaf_path = os.path.join(mushaf_dir, f'page-{page_num:03d}.json')
+    if os.path.exists(mushaf_path):
+        with open(mushaf_path, 'r', encoding='utf-8') as f:
+            mdata = json.load(f)
+        for line in mdata.get('lines', []):
+            line_type = line.get('type', 'text')
+            mushaf_line_types.append(line_type)
+            if line_type == 'text':
+                words = []
+                for w in line.get('words', []):
+                    loc = w.get('location', '')
+                    if loc:
+                        words.append({'location': loc, 'word': w.get('word', '')})
+                mushaf_lines.append(words)
+
     # Layout
     if total_db_lines <= 8:
         default_layout = DEFAULT_LINES_8[:total_db_lines]
@@ -270,7 +356,7 @@ def process_page(page_num, base_dir, quran_images_dir, db_path, output_dir, mush
         default_layout = DEFAULT_LINES_15[:total_db_lines]
         snap_range = SNAP_RANGE
 
-    detected = detect_line_bands(gray, total_db_lines)
+    detected = detect_line_bands(gray, total_db_lines, mushaf_line_types or None)
     if detected:
         layout = []
         for i, (y1, y2) in enumerate(detected):
@@ -279,23 +365,6 @@ def process_page(page_num, base_dir, quran_images_dir, db_path, output_dir, mush
             layout.append((y1, y2-y1, gy, gh))
     else:
         layout = default_layout
-
-    # ═══════════════════════════════════════════════════════════════
-    # Load mushaf JSON — THIS is the source of truth for locations
-    # ═══════════════════════════════════════════════════════════════
-    mushaf_lines = []  # list of lists of {location, word}
-    mushaf_path = os.path.join(mushaf_dir, f'page-{page_num:03d}.json')
-    if os.path.exists(mushaf_path):
-        with open(mushaf_path, 'r', encoding='utf-8') as f:
-            mdata = json.load(f)
-        for line in mdata.get('lines', []):
-            if line.get('type') == 'text':
-                words = []
-                for w in line.get('words', []):
-                    loc = w.get('location', '')
-                    if loc:
-                        words.append({'location': loc, 'word': w.get('word', '')})
-                mushaf_lines.append(words)
 
     # Process each line
     coords = {}

@@ -1,6 +1,14 @@
 # Quran Word Coordinates
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![PyPI](https://img.shields.io/badge/PyPI-qurancoor-blue.svg)](https://pypi.org/project/qurancoor/)
+[![npm](https://img.shields.io/badge/npm-quran--word--coords-red.svg)](https://www.npmjs.com/package/quran-word-coords)
+
 Pixel-accurate word coordinates for every word in the Quran (Madani mushaf). Maps each of the **77,320 words** across **604 pages** to its exact bounding box on the page image.
+
+> 🚀 **Self-host it free:** see the full [Deployment Guide (`deploy.html`)](deploy.html) — clone, run, and deploy to a free, no-credit-card host.
+> ✨ **Explore the features:** see the [Features page (`Features.html`)](Features.html).
+> 🤝 **Want to help?** read [CONTRIBUTING.md](CONTRIBUTING.md). This project is open source under MIT.
 
 ## Install
 
@@ -187,6 +195,23 @@ qurancoor build-freq --mushaf-dir ./mushaf --db word_freq.db
 # Launch viewer
 qurancoor serve --images-dir ./images --port 8003
 ```
+
+## Self-host / Deploy
+
+This system runs **as-is** straight from the repo — the coordinate data and both SQLite databases (`quran_glyphs.db`, `word_freq.db`) are committed, so there's no build step just to run it:
+
+```bash
+git clone https://github.com/bodoorzahera/Quran-coordinate.git
+cd Quran-coordinate
+pip install -e ".[all]"
+qurancoor serve --images-dir ./images --port 8003   # → http://localhost:8003
+```
+
+The full [**Deployment Guide (`deploy.html`)**](deploy.html) covers webhost/frontend configuration, a Docker image, the **top 3 free no-credit-card hosts** (Hugging Face Spaces, Render, Koyeb), and two image-hosting strategies.
+
+## Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for dev setup and guidelines, and our [Code of Conduct](CODE_OF_CONDUCT.md). A promotional overview of current and planned features lives in [Features.html](Features.html).
 
 ## License
 

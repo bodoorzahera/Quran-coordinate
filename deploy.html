@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>دليل النشر — Quran Word Coordinates</title>
+<style>
+  :root{
+    --bg:#0d1117; --panel:#161b22; --panel2:#1c2330; --line:#2a3340;
+    --txt:#e6edf3; --muted:#9aa7b4; --accent:#1f9d76; --accent2:#27c79a;
+    --warn:#f0c040; --code:#0a0e14; --link:#58c2a0;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--txt);
+    font-family:"Segoe UI",Tahoma,system-ui,sans-serif;
+    line-height:1.8; font-size:16px;
+  }
+  body[dir="ltr"]{font-family:system-ui,"Segoe UI",sans-serif}
+  .wrap{max-width:920px;margin:0 auto;padding:0 20px 80px}
+  header.hero{
+    background:linear-gradient(135deg,#0f5c45,#1f9d76 60%,#27c79a);
+    padding:48px 20px 40px;text-align:center;color:#fff;
+  }
+  header.hero h1{margin:0 0 8px;font-size:2rem}
+  header.hero p{margin:0;opacity:.92}
+  .toggle{position:fixed;top:14px;inset-inline-end:14px;z-index:50}
+  .toggle button{
+    background:var(--panel);color:var(--txt);border:1px solid var(--line);
+    padding:8px 14px;border-radius:999px;cursor:pointer;font-size:.85rem;
+  }
+  .toggle button:hover{border-color:var(--accent2)}
+  h2{margin:42px 0 14px;font-size:1.4rem;border-bottom:2px solid var(--accent);padding-bottom:8px;display:inline-block}
+  h3{margin:26px 0 10px;font-size:1.1rem;color:var(--accent2)}
+  p,li{color:var(--txt)}
+  a{color:var(--link)}
+  code{background:var(--code);padding:2px 6px;border-radius:5px;font-family:ui-monospace,Consolas,monospace;font-size:.9em;direction:ltr;display:inline-block}
+  pre{background:var(--code);border:1px solid var(--line);border-radius:10px;padding:16px;overflow:auto;direction:ltr;text-align:left}
+  pre code{background:none;padding:0;display:block;white-space:pre}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 22px;margin:16px 0}
+  .grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fit,minmax(240px,1fr))}
+  .note{border-inline-start:4px solid var(--accent);background:var(--panel2);padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+  .warn{border-inline-start:4px solid var(--warn);background:#2a2410;padding:12px 16px;border-radius:0 8px 8px 0;margin:14px 0}
+  table{width:100%;border-collapse:collapse;margin:16px 0;font-size:.92rem}
+  th,td{border:1px solid var(--line);padding:10px;text-align:start}
+  th{background:var(--panel2)}
+  .badge{display:inline-block;background:var(--accent);color:#fff;border-radius:6px;padding:1px 8px;font-size:.78rem;margin-inline-start:6px}
+  .en{display:none}
+  body[dir="ltr"] .ar{display:none}
+  body[dir="ltr"] .en{display:block}
+  body[dir="ltr"] li.en{display:list-item}
+  body[dir="ltr"] span.en, body[dir="ltr"] a.en{display:inline}
+  .steps{counter-reset:s;list-style:none;padding:0}
+  .steps>li{counter-increment:s;position:relative;padding-inline-start:42px;margin:12px 0}
+  .steps>li::before{content:counter(s);position:absolute;inset-inline-start:0;top:0;width:28px;height:28px;background:var(--accent);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem}
+  footer{text-align:center;color:var(--muted);padding:30px;border-top:1px solid var(--line);margin-top:40px}
+  .toc a{display:inline-block;margin:4px 8px;color:var(--link);text-decoration:none}
+</style>
+</head>
+<body dir="rtl">
+
+<div class="toggle"><button onclick="toggleLang()" id="langBtn">English</button></div>
+
+<header class="hero">
+  <h1>📖 Quran Word Coordinates</h1>
+  <p class="ar">دليل التنزيل والتشغيل والنشر المجاني — من GitHub إلى الإنترنت</p>
+  <p class="en">Download, Run &amp; Free-Hosting Guide — from GitHub to the web</p>
+</header>
+
+<div class="wrap">
+
+  <div class="card toc">
+    <span class="ar"><strong>المحتويات:</strong></span><span class="en"><strong>Contents:</strong></span>
+    <a href="#overview"><span class="ar">نظرة عامة</span><span class="en">Overview</span></a> ·
+    <a href="#req"><span class="ar">المتطلبات</span><span class="en">Requirements</span></a> ·
+    <a href="#run"><span class="ar">التشغيل المحلي</span><span class="en">Run Locally</span></a> ·
+    <a href="#webhost"><span class="ar">إعداد الواجهة</span><span class="en">Frontend/Webhost</span></a> ·
+    <a href="#docker">Docker</a> ·
+    <a href="#hosts"><span class="ar">أفضل 3 استضافات مجانية</span><span class="en">Top 3 Free Hosts</span></a> ·
+    <a href="#images"><span class="ar">استراتيجية الصور</span><span class="en">Image Strategy</span></a> ·
+    <a href="#trouble"><span class="ar">حل المشكلات</span><span class="en">Troubleshooting</span></a>
+  </div>
+
+  <!-- ================= OVERVIEW ================= -->
+  <h2 id="overview"><span class="ar">١. نظرة عامة على النظام</span><span class="en">1. System Overview</span></h2>
+  <div class="ar">
+    <p>هذا النظام يربط كل كلمة من كلمات المصحف المدني (<strong>٧٧٬٣٢٠ كلمة عبر ٦٠٤ صفحات</strong>) بإحداثيات البكسل الدقيقة لموضعها على صورة الصفحة. يتكوّن من:</p>
+    <ul>
+      <li><strong>خادم خلفي (Backend)</strong>: تطبيق <code>FastAPI</code> بلغة Python يخدم واجهة برمجة التطبيقات (API) <em>و</em> واجهة المستخدم <em>و</em> صور الصفحات.</li>
+      <li><strong>الواجهة الأمامية (Frontend)</strong>: صفحة HTML/CSS/JavaScript مدمجة داخل الخادم نفسه (ليست مشروع بناء منفصل)، تعمل كتطبيق ويب تقدمي (PWA) يعمل دون اتصال.</li>
+      <li><strong>قاعدتا بيانات SQLite</strong>: <code>quran_glyphs.db</code> (بيانات المحارف) و<code>word_freq.db</code> (تكرار الكلمات ومواضعها).</li>
+      <li><strong>حِزم</strong>: حزمة Python على PyPI (<code>qurancoor</code>) وحزمة JavaScript على npm (<code>quran-word-coords</code>).</li>
+      <li><strong>تطبيق أندرويد</strong>: ملف APK جاهز في مجلد <code>downloads/</code>.</li>
+    </ul>
+    <p>الفكرة الأساسية للنشر: <strong>الخادم يخدم كل شيء</strong> — لا توجد خطوة بناء منفصلة للواجهة، وبيانات الإحداثيات وقاعدتا البيانات مرفقتان في المستودع، فيكفي الاستنساخ والتشغيل.</p>
+  </div>
+  <div class="en">
+    <p>This system maps every word of the Madani mushaf (<strong>77,320 words across 604 pages</strong>) to its pixel-accurate bounding box on the page image. It consists of:</p>
+    <ul>
+      <li><strong>Backend</strong>: a Python <code>FastAPI</code> app that serves the API <em>and</em> the UI <em>and</em> the page images.</li>
+      <li><strong>Frontend</strong>: HTML/CSS/JavaScript embedded inside the server itself (not a separate build), delivered as an offline-capable Progressive Web App (PWA).</li>
+      <li><strong>Two SQLite databases</strong>: <code>quran_glyphs.db</code> (glyph data) and <code>word_freq.db</code> (word frequency &amp; occurrences).</li>
+      <li><strong>Packages</strong>: a PyPI package (<code>qurancoor</code>) and an npm package (<code>quran-word-coords</code>).</li>
+      <li><strong>Android app</strong>: a ready APK in the <code>downloads/</code> folder.</li>
+    </ul>
+    <p>Key deployment idea: <strong>the server serves everything</strong> — no separate frontend build, and the coordinate data + both databases ship in the repo, so you just clone and run.</p>
+  </div>
+
+  <!-- ================= REQUIREMENTS ================= -->
+  <h2 id="req"><span class="ar">٢. المتطلبات</span><span class="en">2. Requirements</span></h2>
+  <ul>
+    <li><span class="ar">Python الإصدار 3.8 أو أحدث</span><span class="en">Python 3.8 or newer</span></li>
+    <li><span class="ar">git (لاستنساخ المستودع)</span><span class="en">git (to clone the repo)</span></li>
+    <li><span class="ar">pip (لتثبيت الحزمة)</span><span class="en">pip (to install the package)</span></li>
+    <li><span class="ar">مساحة قرص ~1 جيجابايت (الصور وحدها ~511 ميجابايت)</span><span class="en">~1 GB disk space (the images alone are ~511 MB)</span></li>
+  </ul>
+
+  <!-- ================= RUN LOCALLY ================= -->
+  <h2 id="run"><span class="ar">٣. التنزيل والتشغيل من GitHub</span><span class="en">3. Download &amp; Run from GitHub</span></h2>
+  <p class="ar">هذا هو المسار الأساسي لتشغيل النظام <strong>كما هو الآن بالضبط</strong>:</p>
+  <p class="en">This is the canonical path to run the system <strong>exactly as it is now</strong>:</p>
+<pre><code>git clone https://github.com/bodoorzahera/Quran-coordinate.git
+cd Quran-coordinate
+
+# تثبيت الحزمة وكل اعتمادياتها / install package + all extras
+pip install -e ".[all]"
+
+# تشغيل الخادم (الواجهة + API + الصور) / start server (UI + API + images)
+qurancoor serve --images-dir ./images --port 8003
+
+# افتح المتصفح على / open in browser:
+#   http://localhost:8003</code></pre>
+  <div class="note">
+    <span class="ar">📌 لا توجد خطوة بناء. بيانات الإحداثيات مرفقة داخل الحزمة، وقاعدتا البيانات <code>quran_glyphs.db</code> و<code>word_freq.db</code> داخل المستودع، فالنظام يعمل فور التثبيت.</span>
+    <span class="en">📌 No build step. Coordinate data ships inside the package, and both <code>quran_glyphs.db</code> and <code>word_freq.db</code> are in the repo, so the system runs immediately after install.</span>
+  </div>
+  <h3><span class="ar">أبرز المسارات (Endpoints) للتحقق</span><span class="en">Key endpoints to verify</span></h3>
+  <ul>
+    <li><code>GET /</code> — <span class="ar">الواجهة الرئيسية</span><span class="en">main viewer UI</span></li>
+    <li><code>GET /api/version</code> — <span class="ar">الإصدار وسجل التغييرات</span><span class="en">version &amp; changelog</span></li>
+    <li><code>GET /api/page/1</code> — <span class="ar">إحداثيات كلمات الصفحة</span><span class="en">word coordinates of a page</span></li>
+    <li><code>GET /api/image/1</code> — <span class="ar">صورة الصفحة</span><span class="en">page image</span></li>
+    <li><code>GET /api/word-freq/page/1</code> — <span class="ar">تكرار الكلمات (يستخدم word_freq.db)</span><span class="en">word frequencies (uses word_freq.db)</span></li>
+    <li><code>GET /api/quiz/random</code>, <code>/api/mutashabihat/3</code>, <code>/api/asma-allah</code>, <code>/api/letter-stats</code></li>
+  </ul>
+
+  <!-- ================= FRONTEND / WEBHOST ================= -->
+  <h2 id="webhost"><span class="ar">٤. إعداد الواجهة الأمامية / Webhost</span><span class="en">4. Frontend / Webhost Configuration</span></h2>
+  <div class="ar">
+    <p>الواجهة الأمامية <strong>مدمجة داخل الخادم</strong> (تُرسَل كـ HTML من <code>server.py</code>)، لذا لا تحتاج إلى استضافة منفصلة للواجهة. كل ضبط الواجهة يتم عبر أعلام أمر <code>serve</code>:</p>
+  </div>
+  <div class="en">
+    <p>The frontend is <strong>embedded in the server</strong> (returned as HTML from <code>server.py</code>), so it needs no separate frontend host. All "webhost" configuration is done via <code>serve</code> flags:</p>
+  </div>
+  <table>
+    <tr><th><span class="ar">العَلَم</span><span class="en">Flag</span></th><th><span class="ar">الافتراضي</span><span class="en">Default</span></th><th><span class="ar">الوظيفة</span><span class="en">Purpose</span></th></tr>
+    <tr><td><code>--images-dir</code></td><td><code>./images</code></td><td><span class="ar">مجلد صور الصفحات</span><span class="en">page images directory</span></td></tr>
+    <tr><td><code>--mushaf-dir</code></td><td><code>./mushaf</code></td><td><span class="ar">مجلد نصوص المصحف JSON</span><span class="en">mushaf JSON directory</span></td></tr>
+    <tr><td><code>--word-freq-db</code></td><td><code>./word_freq.db</code></td><td><span class="ar">مسار قاعدة تكرار الكلمات</span><span class="en">word-frequency DB path</span></td></tr>
+    <tr><td><code>--letter-stats</code></td><td><code>./letter_stats.json</code></td><td><span class="ar">ملف إحصاء الحروف</span><span class="en">letter-stats file</span></td></tr>
+    <tr><td><code>--host</code></td><td><code>0.0.0.0</code></td><td><span class="ar">عنوان الاستماع</span><span class="en">bind address</span></td></tr>
+    <tr><td><code>--port</code></td><td><code>8003</code></td><td><span class="ar">المنفذ</span><span class="en">port</span></td></tr>
+  </table>
+  <div class="warn">
+    <span class="ar">⚠️ المنفذ يُضبط عبر العَلَم <code>--port</code> فقط (لا يقرأ متغيّر البيئة <code>PORT</code>). الاستضافات التي تحقن <code>$PORT</code> (مثل Render وKoyeb) يجب أن تستخدم <code>--port $PORT</code> في أمر التشغيل، بينما تتوقع Hugging Face Spaces المنفذ <code>7860</code>.</span>
+    <span class="en">⚠️ The port is set only via the <code>--port</code> flag (it does <em>not</em> read a <code>PORT</code> env var). Hosts that inject <code>$PORT</code> (Render, Koyeb) must pass <code>--port $PORT</code>; Hugging Face Spaces expects port <code>7860</code>.</span>
+  </div>
+  <h3><span class="ar">PWA والعمل دون اتصال</span><span class="en">PWA &amp; offline</span></h3>
+  <p class="ar">الخادم يقدّم <code>/manifest.json</code> و<code>/sw.js</code> (Service Worker) تلقائيًا، فيمكن تثبيت الواجهة كتطبيق وتعمل الصور والـ API بالتخزين المؤقت دون اتصال.</p>
+  <p class="en">The server serves <code>/manifest.json</code> and <code>/sw.js</code> automatically, so the UI is installable as an app and caches images/API for offline use.</p>
+  <h3><span class="ar">وكيل عكسي اختياري (nginx) لنطاق مخصّص</span><span class="en">Optional reverse proxy (nginx) for a custom domain</span></h3>
+<pre><code>server {
+    listen 80;
+    server_name quran.example.com;
+
+    location / {
+        proxy_pass         http://127.0.0.1:8003;
+        proxy_set_header   Host $host;
+        proxy_set_header   X-Forwarded-For $remote_addr;
+    }
+
+    # تخزين مؤقت طويل للصور / long cache for page images
+    location /api/image/ {
+        proxy_pass http://127.0.0.1:8003;
+        proxy_cache_valid 200 30d;
+        add_header Cache-Control "public, max-age=2592000";
+    }
+
+    gzip on;
+    gzip_types application/json text/css application/javascript;
+}</code></pre>
+
+  <!-- ================= DOCKER ================= -->
+  <h2 id="docker">5. Docker</h2>
+  <p class="ar">حاوية محمولة تعمل على معظم الاستضافات. تستخدم <code>${PORT:-8003}</code> لتتوافق مع الاستضافات التي تحقن المنفذ:</p>
+  <p class="en">A portable container that runs on most hosts. It uses <code>${PORT:-8003}</code> to fit hosts that inject the port:</p>
+<pre><code># Dockerfile
+FROM python:3.11-slim
+WORKDIR /app
+COPY . /app
+RUN pip install --no-cache-dir ".[all]"
+EXPOSE 8003
+CMD qurancoor serve --images-dir ./images --host 0.0.0.0 --port ${PORT:-8003}</code></pre>
+<pre><code>docker build -t qurancoor .
+docker run -p 8003:8003 qurancoor</code></pre>
+
+  <!-- ================= FREE HOSTS ================= -->
+  <h2 id="hosts"><span class="ar">٦. أفضل ٣ حلول استضافة مجانية بدون فيزا</span><span class="en">6. Top 3 Free Hosts — No Credit Card</span></h2>
+  <p class="ar">جميع الخيارات أدناه <strong>مجانية ولا تتطلب بطاقة فيزا</strong> (تم التحقق في يونيو ٢٠٢٦). القيد الأهم هو الصور (~511 ميجابايت)، لذا يأتي الترتيب وفقًا لملاءمته لها.</p>
+  <p class="en">All options below are <strong>free and require no Visa/credit card</strong> (verified June 2026). The main constraint is the images (~511 MB), so ranking reflects fit for that.</p>
+
+  <div class="card">
+    <h3>🥇 Hugging Face Spaces (Docker) <span class="badge">recommended</span></h3>
+    <p class="ar">الأنسب للنشر الموحّد: القرص المجاني يصل إلى <strong>50 جيجابايت</strong> فيستوعب الصور بسهولة، 2 CPU و16 جيجابايت RAM، بدون بطاقة. ينام بعد ~48 ساعة خمول ويستيقظ عند أول زيارة.</p>
+    <p class="en">Best for the unified deploy: free disk up to <strong>50 GB</strong> easily holds the images, 2 CPU / 16 GB RAM, no card. Sleeps after ~48h idle, wakes on first visit.</p>
+    <ol class="steps">
+      <li><span class="ar">أنشئ Space جديد، النوع <strong>Docker → Blank</strong>.</span><span class="en">Create a new Space, type <strong>Docker → Blank</strong>.</span></li>
+      <li><span class="ar">أضف <code>Dockerfile</code> (أعلاه) لكن غيّر المنفذ إلى <strong>7860</strong>: <code>CMD qurancoor serve --images-dir ./images --host 0.0.0.0 --port 7860</code></span><span class="en">Add the <code>Dockerfile</code> (above) but use port <strong>7860</strong>: <code>CMD qurancoor serve --images-dir ./images --host 0.0.0.0 --port 7860</code></span></li>
+      <li><span class="ar">ادفع المستودع إلى الـ Space عبر git. للملفات الكبيرة استخدم <code>git lfs</code> (الصور وقواعد البيانات).</span><span class="en">Push the repo to the Space via git. For large files use <code>git lfs</code> (images &amp; databases).</span></li>
+      <li><span class="ar">يبني الـ Space الحاوية تلقائيًا ويعطيك رابط <code>*.hf.space</code>.</span><span class="en">The Space auto-builds and gives you a <code>*.hf.space</code> URL.</span></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3>🥈 Render (Free Web Service)</h3>
+    <p class="ar">ينشر مباشرة من مستودع GitHub، بدون بطاقة، مع scale-to-zero. مناسب إن نقلت الصور إلى تخزين خارجي (الخطة B أدناه) لأن قرص الخطة المجانية محدود.</p>
+    <p class="en">Deploys straight from a GitHub repo, no card, with scale-to-zero. Best if you offload images to external storage (Plan B below), since free-tier disk is limited.</p>
+    <ol class="steps">
+      <li><span class="ar">اربط مستودع GitHub في لوحة Render، واختر <strong>Web Service</strong>.</span><span class="en">Connect the GitHub repo in Render, choose <strong>Web Service</strong>.</span></li>
+      <li><span class="ar">Build Command: <code>pip install ".[all]"</code></span><span class="en">Build Command: <code>pip install ".[all]"</code></span></li>
+      <li><span class="ar">Start Command: <code>qurancoor serve --images-dir ./images --host 0.0.0.0 --port $PORT</code></span><span class="en">Start Command: <code>qurancoor serve --images-dir ./images --host 0.0.0.0 --port $PORT</code></span></li>
+      <li><span class="ar">انشر — يعطيك رابط <code>*.onrender.com</code>.</span><span class="en">Deploy — you get an <code>*.onrender.com</code> URL.</span></li>
+    </ol>
+  </div>
+
+  <div class="card">
+    <h3>🥉 Koyeb (Free Service)</h3>
+    <p class="ar">خدمة مجانية واحدة (0.1 vCPU / 512 ميجابايت RAM)، بدون بطاقة، scale-to-zero. تنشر من GitHub أو من حاوية Docker. ننصح بنقل الصور خارجيًا بسبب حدود الذاكرة/القرص.</p>
+    <p class="en">One free service (0.1 vCPU / 512 MB RAM), no card, scale-to-zero. Deploys from GitHub or a Docker image. Offload images externally due to RAM/disk limits.</p>
+    <ol class="steps">
+      <li><span class="ar">أنشئ تطبيقًا في Koyeb من مستودع GitHub أو Dockerfile.</span><span class="en">Create an app in Koyeb from the GitHub repo or the Dockerfile.</span></li>
+      <li><span class="ar">أمر التشغيل: <code>qurancoor serve --images-dir ./images --host 0.0.0.0 --port $PORT</code></span><span class="en">Run command: <code>qurancoor serve --images-dir ./images --host 0.0.0.0 --port $PORT</code></span></li>
+      <li><span class="ar">انشر — يعطيك رابط <code>*.koyeb.app</code>.</span><span class="en">Deploy — you get a <code>*.koyeb.app</code> URL.</span></li>
+    </ol>
+  </div>
+
+  <h3><span class="ar">جدول المقارنة</span><span class="en">Comparison</span></h3>
+  <table>
+    <tr>
+      <th><span class="ar">المنصة</span><span class="en">Platform</span></th>
+      <th>RAM</th><th><span class="ar">القرص</span><span class="en">Disk</span></th>
+      <th><span class="ar">النوم</span><span class="en">Sleep</span></th>
+      <th><span class="ar">يستوعب الصور؟</span><span class="en">Fits images?</span></th>
+      <th><span class="ar">بدون فيزا</span><span class="en">No card</span></th>
+    </tr>
+    <tr><td>Hugging Face Spaces</td><td>16 GB</td><td>~50 GB</td><td>~48h</td><td><span class="ar">نعم ✅</span><span class="en">Yes ✅</span></td><td>✅</td></tr>
+    <tr><td>Render</td><td>512 MB</td><td><span class="ar">محدود</span><span class="en">limited</span></td><td>scale-to-zero</td><td><span class="ar">بنقل الصور</span><span class="en">with offload</span></td><td>✅</td></tr>
+    <tr><td>Koyeb</td><td>512 MB</td><td><span class="ar">محدود</span><span class="en">limited</span></td><td>scale-to-zero</td><td><span class="ar">بنقل الصور</span><span class="en">with offload</span></td><td>✅</td></tr>
+  </table>
+
+  <!-- ================= IMAGE STRATEGY ================= -->
+  <h2 id="images"><span class="ar">٧. استراتيجية الصور (511 ميجابايت)</span><span class="en">7. Image Strategy (511 MB)</span></h2>
+  <h3><span class="ar">الخطة A — نشر موحّد (الأبسط)</span><span class="en">Plan A — Unified deploy (simplest)</span></h3>
+  <p class="ar">الخادم يخدم الصور من <code>./images</code> مباشرة. يحتاج إلى قرص ≥600 ميجابايت، لذا الأنسب له <strong>Hugging Face Spaces</strong>. لا حاجة لأي تعديل في الكود.</p>
+  <p class="en">The server serves images directly from <code>./images</code>. Needs ≥600 MB disk, so <strong>Hugging Face Spaces</strong> fits best. No code changes needed.</p>
+  <h3><span class="ar">الخطة B — فصل الصور على CDN/تخزين</span><span class="en">Plan B — Offload images to CDN/storage</span></h3>
+  <div class="ar">
+    <p>ارفع مجلد <code>images/</code> إلى تخزين كائنات مجاني مثل <strong>Cloudflare R2</strong> (بدون بطاقة، طبقة مجانية)، ثم وجّه روابط الصور إليه. هكذا يبقى حجم التطبيق صغيرًا فيناسب استضافات 512 ميجابايت (Render / Koyeb).</p>
+    <ul>
+      <li>نقطة التعديل في الكود: المسار <code>/api/image/{n}</code> في <code>src/qurancoor/server.py</code> — استبدل إرجاع الملف المحلي بإعادة توجيه (redirect) إلى رابط الـ CDN.</li>
+      <li>أو على مستوى الواجهة: عدّل عنوان الصور ليشير إلى نطاق الـ CDN بدلًا من <code>/api/image/</code>.</li>
+    </ul>
+  </div>
+  <div class="en">
+    <p>Upload the <code>images/</code> folder to free object storage like <strong>Cloudflare R2</strong> (no card, free tier), then point image URLs there. This keeps the app instance tiny so it fits 512 MB hosts (Render / Koyeb).</p>
+    <ul>
+      <li>Code touch point: the <code>/api/image/{n}</code> route in <code>src/qurancoor/server.py</code> — replace the local file response with a redirect to the CDN URL.</li>
+      <li>Or at the frontend level: change the image base to the CDN domain instead of <code>/api/image/</code>.</li>
+    </ul>
+  </div>
+
+  <!-- ================= TROUBLESHOOTING ================= -->
+  <h2 id="trouble"><span class="ar">٨. حل المشكلات الشائعة</span><span class="en">8. Troubleshooting</span></h2>
+  <table>
+    <tr><th><span class="ar">المشكلة</span><span class="en">Problem</span></th><th><span class="ar">الحل</span><span class="en">Fix</span></th></tr>
+    <tr><td><span class="ar">الصفحة تعمل لكن الصور لا تظهر</span><span class="en">Page loads but images missing</span></td><td><span class="ar">تأكد من صحة <code>--images-dir</code> وأن مجلد الصور موجود</span><span class="en">Check <code>--images-dir</code> and that the images folder exists</span></td></tr>
+    <tr><td><span class="ar">المنفذ مشغول / لا يستجيب على الاستضافة</span><span class="en">Port busy / host not responding</span></td><td><span class="ar">استخدم <code>--port $PORT</code> (Render/Koyeb) أو <code>7860</code> (HF)</span><span class="en">Use <code>--port $PORT</code> (Render/Koyeb) or <code>7860</code> (HF)</span></td></tr>
+    <tr><td><span class="ar">تكرار الكلمات لا يعمل</span><span class="en">Word frequency not working</span></td><td><span class="ar">تأكد أن <code>word_freq.db</code> موجود ومسار <code>--word-freq-db</code> صحيح</span><span class="en">Ensure <code>word_freq.db</code> exists and <code>--word-freq-db</code> path is correct</span></td></tr>
+    <tr><td><span class="ar">بطء أول طلب بعد فترة خمول</span><span class="en">Slow first request after idle</span></td><td><span class="ar">طبيعي — الاستضافات المجانية تنام؛ أول زيارة توقظها</span><span class="en">Normal — free hosts sleep; first visit wakes them</span></td></tr>
+    <tr><td><span class="ar">رفض الدفع للملفات الكبيرة على git</span><span class="en">Git push rejected for large files</span></td><td><span class="ar">استخدم <code>git lfs track</code> للصور وقواعد البيانات</span><span class="en">Use <code>git lfs track</code> for images &amp; databases</span></td></tr>
+  </table>
+
+  <div class="note">
+    <span class="ar">انظر أيضًا: <a href="Features.html">صفحة المميزات (Features.html)</a> · <a href="README.md">README</a> · <a href="AI_AGENT_GUIDE.md">دليل الوكلاء</a> · <a href="CONTRIBUTING.md">دليل المساهمة</a></span>
+    <span class="en">See also: <a href="Features.html">Features page</a> · <a href="README.md">README</a> · <a href="AI_AGENT_GUIDE.md">AI Agent Guide</a> · <a href="CONTRIBUTING.md">Contributing</a></span>
+  </div>
+
+</div>
+
+<footer>
+  <span class="ar">مفتوح المصدر برخصة MIT · </span>
+  <span class="en">Open source under the MIT License · </span>
+  <a href="https://github.com/bodoorzahera/Quran-coordinate">GitHub</a>
+</footer>
+
+<script>
+function toggleLang(){
+  var b=document.body, btn=document.getElementById('langBtn');
+  if(b.getAttribute('dir')==='rtl'){
+    b.setAttribute('dir','ltr'); b.parentElement.setAttribute('lang','en'); btn.textContent='العربية';
+  } else {
+    b.setAttribute('dir','rtl'); b.parentElement.setAttribute('lang','ar'); btn.textContent='English';
+  }
+}
+</script>
+</body>
+</html>
