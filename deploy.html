@@ -200,10 +200,14 @@ FROM python:3.11-slim
 WORKDIR /app
 COPY . /app
 RUN pip install --no-cache-dir ".[all]"
-EXPOSE 8003
-CMD qurancoor serve --images-dir ./images --host 0.0.0.0 --port ${PORT:-8003}</code></pre>
+EXPOSE 7860
+CMD qurancoor serve --images-dir ./images --host 0.0.0.0 --port ${PORT:-7860}</code></pre>
 <pre><code>docker build -t qurancoor .
-docker run -p 8003:8003 qurancoor</code></pre>
+docker run -p 7860:7860 qurancoor</code></pre>
+  <div class="note">
+    <span class="ar">📦 هذا الملف <code>Dockerfile</code> موجود جاهزًا في جذر المستودع. يستخدم المنفذ <strong>7860</strong> افتراضيًا (متوافق مع Hugging Face)، ويحترم <code>$PORT</code> على Render/Koyeb.</span>
+    <span class="en">📦 This <code>Dockerfile</code> ships in the repo root. It defaults to port <strong>7860</strong> (Hugging Face-friendly) and respects <code>$PORT</code> on Render/Koyeb.</span>
+  </div>
 
   <!-- ================= FREE HOSTS ================= -->
   <h2 id="hosts"><span class="ar">٦. أفضل ٣ حلول استضافة مجانية بدون فيزا</span><span class="en">6. Top 3 Free Hosts — No Credit Card</span></h2>
@@ -214,12 +218,20 @@ docker run -p 8003:8003 qurancoor</code></pre>
     <h3>🥇 Hugging Face Spaces (Docker) <span class="badge">recommended</span></h3>
     <p class="ar">الأنسب للنشر الموحّد: القرص المجاني يصل إلى <strong>50 جيجابايت</strong> فيستوعب الصور بسهولة، 2 CPU و16 جيجابايت RAM، بدون بطاقة. ينام بعد ~48 ساعة خمول ويستيقظ عند أول زيارة.</p>
     <p class="en">Best for the unified deploy: free disk up to <strong>50 GB</strong> easily holds the images, 2 CPU / 16 GB RAM, no card. Sleeps after ~48h idle, wakes on first visit.</p>
-    <ol class="steps">
-      <li><span class="ar">أنشئ Space جديد، النوع <strong>Docker → Blank</strong>.</span><span class="en">Create a new Space, type <strong>Docker → Blank</strong>.</span></li>
-      <li><span class="ar">أضف <code>Dockerfile</code> (أعلاه) لكن غيّر المنفذ إلى <strong>7860</strong>: <code>CMD qurancoor serve --images-dir ./images --host 0.0.0.0 --port 7860</code></span><span class="en">Add the <code>Dockerfile</code> (above) but use port <strong>7860</strong>: <code>CMD qurancoor serve --images-dir ./images --host 0.0.0.0 --port 7860</code></span></li>
-      <li><span class="ar">ادفع المستودع إلى الـ Space عبر git. للملفات الكبيرة استخدم <code>git lfs</code> (الصور وقواعد البيانات).</span><span class="en">Push the repo to the Space via git. For large files use <code>git lfs</code> (images &amp; databases).</span></li>
-      <li><span class="ar">يبني الـ Space الحاوية تلقائيًا ويعطيك رابط <code>*.hf.space</code>.</span><span class="en">The Space auto-builds and gives you a <code>*.hf.space</code> URL.</span></li>
-    </ol>
+    <p class="ar"><strong>الطريقة الأسهل — سكربت جاهز</strong> (يستخدم رفع <code>huggingface_hub</code> الأصلي للملفات الكبيرة، بلا حاجة إلى git-lfs ولا تعديل أي ملف):</p>
+    <p class="en"><strong>Easiest — a ready script</strong> (uses <code>huggingface_hub</code> native large-file upload — no git-lfs, no file editing):</p>
+<pre><code># 1) ثبّت الأداة / install the tool
+pip install -U huggingface_hub
+
+# 2) سجّل الدخول بتوكن WRITE من huggingface.co/settings/tokens
+hf auth login
+
+# 3) انشر (الـ Dockerfile وسكربت النشر موجودان في المستودع)
+python scripts/deploy_to_hf.py &lt;username&gt;/quran-word-coords</code></pre>
+    <p class="ar">السكربت ينشئ الـ Space (نوع Docker)، ويرفع <code>README</code> بترويسة Hugging Face المطلوبة (المنفذ 7860)، ويرفع المشروع كاملًا عدا ما لا يحتاجه التشغيل (venv و<code>output/</code> وquran.com-images…). ثم يبني الـ Space ويعطيك رابط <code>*.hf.space</code>.</p>
+    <p class="en">The script creates the Space (Docker), uploads a <code>README</code> with the required Hugging Face header (port 7860), and uploads the whole project except what the app doesn't need (venv, <code>output/</code>, quran.com-images…). The Space then builds and gives you a <code>*.hf.space</code> URL.</p>
+    <p class="ar"><strong>أو يدويًا عبر git:</strong> أنشئ Space (Docker → Blank)، ثم <code>git lfs track</code> للصور وقواعد البيانات، وادفع المستودع. الـ <code>Dockerfile</code> الجاهز يخدم على 7860 تلقائيًا.</p>
+    <p class="en"><strong>Or manually via git:</strong> create a Space (Docker → Blank), <code>git lfs track</code> the images &amp; databases, then push the repo. The bundled <code>Dockerfile</code> already serves on 7860.</p>
   </div>
 
   <div class="card">

@@ -1,0 +1,19 @@
+# Keep the build context (and the Space) lean — exclude things the running app
+# does NOT need. The bundled coord data lives in src/qurancoor/data, so output/
+# and the quran.com-images submodule (only used to regenerate data) are not needed.
+.git
+venv/
+env/
+.venv/
+__pycache__/
+*.pyc
+*.bak
+dist/
+build/
+*.egg-info/
+output/
+output.old/
+quran.com-images/
+npm/node_modules/
+npm/dist/
+*.db-journal
